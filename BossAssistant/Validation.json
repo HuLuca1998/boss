@@ -1,0 +1,171 @@
+{
+  "app": "/Applications/首领助手.app",
+  "bundle_identifier": "local.luca.HeroBossAssistant",
+  "version": "1.3.7",
+  "supported_game_version": "1.16.3",
+  "architecture": "arm64",
+  "tests": {
+    "native_websocket_authentication": "passed: invalid token rejected, authenticated list RPC returned",
+    "cache_restore": "passed: restored SHA256 4085b2c2f223e255fe5b8fa62379d02d2843671ce6def362694304a099af37a0",
+    "injection_ui": "passed: backup, scoped cache folder authorization, restart and connection",
+    "live_detection": "passed: 16 current-area bosses, 19 region entries with unlock status",
+    "start_stop_ui": "passed: Ice Bear entered cooldown; stop acknowledged follow cancellation and auto battle disabled",
+    "region_switch": "passed with prior bridge: Redleaf Court area7 to Endless Sand Sea area6, different 16-boss list",
+    "scoped_permission_persistence": "passed: installed release injected again without folder selection",
+    "relaunch_without_reinjection": "passed: installed app reopened, existing injected game reconnected and current 16-boss list loaded"
+  },
+  "executable_sha256": "5ccd4b6b46ab98f034b37bd6ad0bc8516d93fee5f0a02f0c73858c2ebec30c27",
+  "final_state": "Installed1.3.7 fixed local signing; Input Monitoring granted and retained through a subsequent resource-changing re-sign/install/relaunch. Final runtime connected; user confirmed ESC works. Hunt intent preserved.",
+  "keyboardControl": {
+    "date": "2026-10-22",
+    "startupErrorFixed": "Initialize keyboard handlers only when enabled after stage is ready",
+    "transport": "Native four-key state polling only when game is frontmost; existing game movement logic",
+    "userVerifiedMovement": true,
+    "userVerifiedStopsOnRelease": true,
+    "runtimeEventCount": 65,
+    "currentlyEnabled": true,
+    "recordingEnabled": false,
+    "checks": [
+      "runtime mapping",
+      "diagonal input",
+      "release",
+      "blur",
+      "text input",
+      "disable",
+      "original WASD",
+      "disconnect",
+      "native forward",
+      "expired input release",
+      "app signature"
+    ]
+  },
+  "locationAndResume": {
+    "date": "2026-10-23",
+    "runtimeVersion": 3,
+    "liveLocation": {
+      "heroPos": {
+        "x": -8502.213946987073,
+        "y": 0,
+        "z": 1074.3855706385975
+      },
+      "kind": "wild",
+      "dungeonId": null,
+      "sceneType": 1,
+      "name": "无尽沙海Ⅰ",
+      "ready": true
+    },
+    "runtimeTests": "passed: actual scene vs cached wild area, dungeon name, wild-only cancellation, old teleport callback rejected, scene/area/loading guards, return permits new target",
+    "nativeTests": "passed: pause in dungeon, loading and teleport gates, original-area return after long detour, legacy script detection",
+    "actualDungeonRoundTrip": "live dungeon entry verified: 22:52:31 Trial Realm 16-2 detected; UI confirms paused waiting for Redleaf Court. Wild-region return/resume verified live; dungeon return logic shares tested gate.",
+    "livePause": "verified: 22:51:55 detected Endless Sand Sea I, cancelled old wild target, UI shows paused waiting for Redleaf Court; one boss cooldown already verified",
+    "liveResume": "verified: 22:52:12 returned to Redleaf Court, refreshed and resumed; Broodmother cooldown verified at 22:52:18"
+  },
+  "update_2026_10_23": {
+    "continuous_intent": "passed: 100 connection recovery cycles, explicit stop prevents all future recovery",
+    "immediate_resume": "passed pure-state tests: skips countdown; cannot override held movement; cannot restart explicitly stopped task. Native app built and installed; live paused-button click pending real movement.",
+    "scene_and_keyboard_runtime": "passed keyboard-runtime.cjs and location-runtime.cjs",
+    "bridge": "previous 1.0.4 main-actor stress passed 2000 concurrent replies + 100 disconnection failures; unchanged this update",
+    "input_monitoring": "Permission true after readding installed 1.0.5; user confirmed all WASD keys work.",
+    "signature": "ad hoc; no valid codesigning identity available. Future update permission persistence not solved.",
+    "game_safety": "No engine frame hooks or game restart/reinjection during this update. Bundled runtime removes legacy trial capture, current compatible running v3 not replaced.",
+    "background_limit": "continuous task persistence does not guarantee game simulation advances when hidden/fullscreen video",
+    "relaunch": "new exit path preserves saved area and suspends owned hunt; automatic startup uses existing saved-intent path"
+  },
+  "assistance_1_1_0": {
+    "date": "2026-10-24",
+    "runtime_simulation": "passed assistance-runtime.cjs: independent pre-role dialogs, callback allowlist, stale/duplicate action guard, account lock attack guard, event/popup deduplication, channels, lossless IDs, claim acknowledgement, no blind regrant, assist cap, context mismatch",
+    "policy_tests": "passed RecoveryPolicyTests.swift: rolling 60 seconds, second occurrence locks before auto-confirmation, duplicate poll dedupe, encode/decode lock durability, only manual unlock",
+    "regressions": "passed keyboard-runtime.cjs, location-runtime.cjs, HuntContinuityTests.swift; full native build and codesign verification passed",
+    "live": "game loaded after one script update, UI connected at Redleaf Court; toggles enabled; helper permission hint confirms input access",
+    "live_trigger_limit": "No real connection-loss/replaced-login/new-red-packet event deliberately produced. These branches validated in simulation, natural-event end-to-end observation pending.",
+    "privacy": "No ordinary chat contents persisted. Runtime observes world/alliance only; no chat send, no private-session fetch, no read marking.",
+    "lock_persistence": "UserDefaults RecoveryPolicy contains seen tokens and rolling hit timestamps, lock survives helper relaunch.",
+    "background": "No engine loop hooks or background lifecycle bypass; existing hidden-game suspension limitation remains.",
+    "live_confirmation": "Activity log since runtime upgrade records one automated invocation of the original login-confirm handler at 03:53:46; game subsequently connected and hunt resumed at 03:54:59. Exact popup kind not retained in the log. Account lockout and actual red packet awards remain simulation-only pending natural events."
+  },
+  "event_viewer_1_1_2": {
+    "ui": "Verified Event Records sheet, connection/red-packet categories, event-row details with timestamp/data, Red Packet Details tab with actual zero-count/empty state. No fake records inserted.",
+    "persistence": "Legacy activity log imported, Events.jsonl created with JSON-encoded event data. Reloaded after helper restart.",
+    "ledger_tests": "passed RedPacketLedgerTests.swift: pending excluded, duplicate observations no added award, verified amounts retained after game cache eviction, automatic/manual labels and currency-separated sums, Codable reload",
+    "trigger_evidence": "Recovery policy recorded a natural 200104 occurrence at 03:53:28; game runtime confirmation counter and activity log show automated original-button retry; subsequently normal game and hunt resumed. Two-occurrence real conflict deliberately not manufactured. Real packet receipt/award still pending natural event.",
+    "ui_scope": "Records and fields displayed inside app; ordinary chat not stored."
+  },
+  "popup_history_1_1_3": {
+    "simulation": "Passed popup lifecycle, polling deduplication, reused component reopen, queue ACK, sensitive-key redaction, accessor/callback isolation; existing assistance/keyboard/location regressions passed. Full native build passed.",
+    "live": "Real WildIdleRewardView 1023, NotifyMsgView 1005, NotifySceneSwitchView 1125 records persisted and visible in app. Reward button label, income texts, scene and raw JSON verified in native viewer. No popup callback or button invoked by recorder.",
+    "storage": "Local 弹窗历史.jsonl, durable write before runtime ACK, viewer retains latest 2000 records; runtime transient queue bounded 200.",
+    "limitations": "Game UI components only; no guarantee for OS/SDK dialogs, background-suspended game, pre-listener short-lived views, or queue overflow. Visible text is retained; sensitive parameter keys redacted with bounded object traversal. Repeated game OpenView events are recorded as separate occurrences."
+  },
+  "event_viewer_1_1_4": {
+    "cause": "Native TabView visibly collapsed into ellipsis although accessibility exposed all tabs. Prior AX-only inference was insufficient.",
+    "fix": "Three persistent explicit buttons replace TabView, Chinese display aliases for known popup components.",
+    "verification": "Installed native screenshot verifies all three buttons visible, popup history clicked, actual 挂机收益 record selected with JSON details. Existing Input Monitoring renewed and granted hint verified. Game not restarted."
+  },
+  "settings_and_popups_1_2_0": {
+    "ui": "Installed settings sheet; actual screenshots verify Auxiliary and Popup Handling buttons, WASD/red-packet toggles, separate network/replaced-login/idle-reward/reward-notice checkboxes. Saved defaults, existing keyboard grant renewed and authorized UI confirmed.",
+    "runtime": "Game restarted once, normal Redleaf Court load and capability popupHandlingVersion verified via absence of awaiting-script warning. Hunt intent retained.",
+    "simulation": "Passed known reward action opt-in, 2s dwell, disabled button, account lock, exact component name/ID guard, one attempt per occurrence, no repeated claim/share; assistance/keyboard/location regressions pass; native build/sign verification pass.",
+    "live_limit": "No post-upgrade natural idle reward or reward notice received yet; action branches verified in mocks against recovered handler source. Actual popup closure awaits next occurrence.",
+    "policy": "Idle reward uses original OnrewardReceiveBtnClick only with nonempty income and enabled visible button; 1017 NotifyItemGainView calls normal Close, never share. Defaults on, hunting-only default on. Unknown collected dialogs remain disabled/pending adaptation.",
+    "source_evidence": "WildIdleRewardView.OnrewardReceiveBtnClick calls field_gain_idle_reward_c2s with empty payload, server GainIdleReward then OnGainReward closes. NotifyItemGainView Close runs normal after-close next-reward scheduling."
+  },
+  "regional_boss_1_3_1": {
+    "state_fix": "Authoritative alive => ready and cd=0 even missing revive_time or stale future timestamp; expired dead stays unknown until server refresh. Numeric timestamp strings accepted.",
+    "ui_live": "Native UI at13:37:34 shows 青铜龙首领, BOSS首领, keys2, 已刷新, 可前往; hunt current target 正在前往 青铜龙首领. Installed1.3.1.",
+    "list": "GetMonsterItemDataListByAreaId include area bosses; offline catalog now includes point_type3. Redleaf17 rows verified. Area key item34 persisted.",
+    "spending": "Own targeted boss result only, active hunt same area, real key>0, enabled button, original normal/special handler, one attempt. Substitute3361 and purchase fallback forbidden. Server reward event recorded distinctly. Actual kill/open-key cycle not yet verified live.",
+    "stale": "Snapshot older10s shows waiting/config rows instead of old countdown.",
+    "tests": "location runtime: missing alive timestamp, stale future alive timestamp, string countdown, expired dead; no keys/no cross-area spend, own result one request; assistance/blank-close/keyboard regressions pass; native build and sign pass.",
+    "input_monitoring": "OS requested administrator authentication on refreshing existing authorization; user asked to enter password locally. Pending user confirmation. Do not claim keyboard reauthorization complete."
+  },
+  "blank_close_unified": {
+    "rule": "Topmost UIAdaptMgr.maskView only; cfg.mask2 plus visible close tip plus exact BaseView.OnMaskBgClick identity; excludes1023 dedicated claim and unopened1276 boss box. Original mask-click handler, dwell2s, one attempt, account lock respected.",
+    "ui": "Unified blank-close switch replaces reward-notice toggle; migrated old preference. Auxiliary has area-boss hunt and keyed box toggles.",
+    "live": "Persisted events prove 05:00:12 AllianceDungeonCombatPerformanceStarView1273 blankClose then observed closed; idleReward1023 and announcement1080 handled records exist.",
+    "observation": "Retrospective event history, not direct visual presence at05:00. Report refresh-observation-2026-10-24.json. One-off automation deleted after review."
+  },
+  "attack_fix_1_3_2": {
+    "cause": "Standard SetSingleOutEventRouting returns early when native bounty helper server status action, even with client pause. Follow line is created before route rejection.",
+    "fix": "Detect active vs paused bounty. Paused: existing game DoubleAStar and SetClientHeroPathInfo(noAI=true), engine centimeters, clear only owned paths, enable original auto-skill on arrival. Active: explicit conflict state without changing bounty settings. No engine hooks or frames forced.",
+    "tests": "location-runtime passes fallback units, arrival, own-path cleanup, active conflict, scene guards, area boss/box. assistance and keyboard regressions pass; native compile passes.",
+    "live": "13:46 arrived at 青铜龙 using pausedBountyPath; CUA visible skill damage and named player damage statistics, HP52→45. 13:49:13 same boss cooldown verified. 13:49:18 original normal-button key opening, server reward event13:49:21, key2→1. Six normal boss cooldowns also verified.",
+    "timeout": "Regional boss maximum valid-game-time wait600s; normal75s. Native-only timeout refresh after runtime installation did not restart game.",
+    "evidence": "attack-verification-2026-10-24.json includes actual key-spend and server-confirmed rewards.",
+    "input_monitoring": "Admin-authentication handoff remains pending, no keyboard authorization success claimed for latest binary."
+  },
+  "zero_key_1_3_3": {
+    "finding": "Selection and goto already rejected zero keys; last successful regional fight could leave hero and auto-skill in regional zone when no ordinary target was immediately actionable. Logs showed no new 青铜龙 goto after13:59 key0, but no exit rule existed.",
+    "fix": "During requested hunt, except manual movement/away pause, real key0 plus actual regional combat zone => suspend owned route, original auto-skill off, ordinary-field teleport when game permits. No transfer if game rejects it; battle remains off and periodic retry continues. No total-hunt Stop. Target-in-flight loop also aborts regional target if key becomes0.",
+    "tests": "location-runtime covers manual/normal-zone/positive-key/wrong-area guards, zero-key battle-off and ordinary-zone teleport completion; existing route/attack/box/location regressions pass. Native build/sign pass.",
+    "live_limit": "No deliberate zero-key regional entry manufactured. After installation verify real zero-key ordinary patrol, regional exit branch simulation-tested.",
+    "live": "Installed gate observed with key0 and text 区域BOSS钥匙已用完 · 等待普通首领刷新, normal targets patrolled; no regional reentry manufactured."
+  },
+  "internal_blank_close_1_3_4": {
+    "observed": "Real current NotifyItemGainView1017 visible with 点击空白处关闭, record cfg.mask null / blankClose false, no handled event. Unification had dropped the internal background path.",
+    "fix": "Recognize CommonBg1SubView exact original close handler, correct baseView, visible enabled close button, localized blank-close label; keep same unified setting. Compare common frame against existing top mask; refuse ambiguous candidates. Separate blank dismissal attempt from key/reward action attempt, so opened boss box may later close.",
+    "tests": "assistance-runtime added no-outer-mask internal reward frame, unified toggle, normal handler identity, no repeated click/share, custom-handler rejection; existing assistance/location/zero-key tests pass; native compile/sign pass.",
+    "live": "Installed1.3.4 and script updated. Original pending notice removed by normal restart; a new natural1017 occurrence has not yet been observed after update. Do not claim actual auto-dismissal verified until handled+closed records exist."
+  },
+  "red_packet_speed_1_3_5": {
+    "change": "Live world/alliance packet event immediately requests original GrabRedPacket without pre-query; burst spacing200ms; helper assistance polling500ms. Channel, eligibility, duplicate and account-lock guards retained.",
+    "records": "Discovery-to-request milliseconds persisted and shown in packet detail; successful amount requires server confirmation.",
+    "tests": "assistance-runtime, location-runtime, keyboard-runtime pass; native build and installed signature verify.",
+    "live": "Installed and game restarted once; native UI connected,17bosses and world/alliance monitoring active. Natural new fast-claim award not yet observed; no live latency claim.",
+    "keyboard": "Existing enabled preference retained; updated binary Input Monitoring authorization not verified."
+  },
+  "fixed_signing_1_3_7": {
+    "identity": "BossAssistant Local Signing",
+    "certificate_sha1": "B6D3E9976B2192AAB7A6AE143C3A9012D7C101DA",
+    "private_key": "login keychain only; temporary import files removed",
+    "trust": "user codeSign only",
+    "requirement": "identifier local.luca.HeroBossAssistant AND exact certificate leaf SHA1; no cdhash",
+    "build": "fails if fixed signing identity unavailable; no ad hoc fallback",
+    "live": "Input Monitoring granted after replacing old record; subsequent modified-runtime resource bundle re-sign and app replacement retained allowed UI without reauthorization.",
+    "limit": "One real subsequent modified-resource app update retained authorization; this does not guarantee survival of certificate replacement, OS permission reset, or machine migration."
+  },
+  "escape_1_3_7": {
+    "tests": "keyboard runtime passes original CommonTab return, direct BaseView BagView, held key, typing, custom callback, unknown modal, passive ticker exclusion; assistance/location regressions pass.",
+    "live": "User confirmed function usable 2026-10-26. Activity.log:01:38:58 ESC BagView1013,01:39:05 and01:39:10 LotteryShopView1204,01:39:06/10 view1258,01:39:13 ShopView1043 invoked original return. CUA observed field scene after return. No purchase performed.",
+    "cause": "BagView directly inherits BaseView; old BaseMultiActivityView-only rule missed it. Native privilege also missing on prior ad hoc build. Live ESC telemetry revealed passive NotifyMsgView1005 obstructing candidate selection; now excludes known game passive ticker names."
+  }
+}

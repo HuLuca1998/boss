@@ -1,0 +1,25 @@
+.DS_Store
+*.log
+
+# Local build outputs and version backups
+BossAssistant/build/
+BossAssistant/dist/
+BossAssistant/releases/
+BossAssistant/Tests/bridge-integration
+*.app/
+.build/
+
+# Local reverse-engineering artifacts and live observation data
+analysis/
+BossAssistant/*-observation-*.json
+BossAssistant/*-verification-*.json
+
+# Runtime credentials and signing private material
+Connection.json
+*.bookmark
+*.p12
+*.pfx
+*.key
+*.pem
+.env
+.env.*
