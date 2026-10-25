@@ -61,6 +61,7 @@ struct MainView:View {
         }.frame(minWidth:1020,minHeight:700).preferredColorScheme(.dark).tint(teal)
         .sheet(isPresented:$showSettings){SettingsView(model:model)}
         .sheet(isPresented:$showEvents){EventHistoryView(model:model)}
+        .onReceive(NotificationCenter.default.publisher(for:Notification.Name("BossAssistantInstallReady"))){_ in showSettings=false;showEvents=false}
         .alert("注入脚本",isPresented:$showInject){Button("取消",role:.cancel){};Button("备份并注入"){Task{await model.inject()}}}message:{Text("将备份游戏缓存，注入本地控制脚本，并重启游戏一次。游戏应用与系统安全设置保持原状。当前适配版本：1.16.3。")}
         .alert("还原原始脚本",isPresented:$showRestore){Button("取消",role:.cancel){};Button("还原并重启"){Task{await model.restore()}}}message:{Text("将暂停派发并保留攻略任务，恢复原始游戏脚本，并重启游戏。")}
         .alert("操作提示",isPresented:Binding(get:{model.errorText != nil},set:{if !$0{model.errorText=nil}})){Button("知道了"){model.errorText=nil}}message:{Text(model.errorText ?? "")}
@@ -69,6 +70,7 @@ struct MainView:View {
 final class AppDelegate:NSObject,NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender:NSApplication)->Bool{!AppModel.shared.running}
     func applicationShouldTerminate(_ sender:NSApplication)->NSApplication.TerminateReply {
+        if UpdateController.shared.readyToQuit{return .terminateNow}
         guard AppModel.shared.running else{return .terminateNow}
         Task{@MainActor in await AppModel.shared.prepareForExit();sender.reply(toApplicationShouldTerminate:true)}
         return .terminateLater

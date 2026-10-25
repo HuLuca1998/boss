@@ -47,6 +47,7 @@ struct UpdateError:LocalizedError {let message:String;init(_ message:String){sel
     @Published var checkedAt:Date?
     @Published var lastInstallMessage:String?
     private var downloader:UpdateDownload?
+    private(set) var readyToQuit=false
     let currentVersion=Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "0.0.0"
     init(){
         let result=FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/HeroBossAssistant/UpdateResult.json")
@@ -74,7 +75,7 @@ struct UpdateError:LocalizedError {let message:String;init(_ message:String){sel
         installing=true;error=nil;progress=0;downloaded=0;total=archive.size;phase="正在下载更新…"
         let directory=FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/HeroBossAssistant/Updates/\(UUID().uuidString)")
         var handedOff=false
-        defer{installing=false;downloader=nil;if !handedOff{try? FileManager.default.removeItem(at:directory)}}
+        defer{downloader=nil;if !handedOff{installing=false;try? FileManager.default.removeItem(at:directory)}}
         do{
             try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true,attributes:[.posixPermissions:0o700])
             var request=URLRequest(url:checksum.browser_download_url);request.timeoutInterval=30
@@ -101,7 +102,10 @@ struct UpdateError:LocalizedError {let message:String;init(_ message:String){sel
             try FileManager.default.copyItem(at:helper,to:installer)
             let process=Process();process.executableURL=installer;process.arguments=["install",String(ProcessInfo.processInfo.processIdentifier),Bundle.main.bundleURL.path,staged.path,release.version,directory.path]
             try process.run();handedOff=true
-            NSApplication.shared.terminate(nil)
+            readyToQuit=true
+            NotificationCenter.default.post(name:Notification.Name("BossAssistantInstallReady"),object:nil)
+            // SwiftUI settings is a sheet; dismiss before asking AppKit to terminate.
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.4){NSApplication.shared.terminate(nil)}
         }catch{self.error=error.localizedDescription;phase=(error as NSError).code == NSURLErrorCancelled ? "已取消下载" : "更新未完成，当前版本保持可用"}
     }
     nonisolated static func command(_ path:String,_ args:[String])async throws{
