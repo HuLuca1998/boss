@@ -11,7 +11,7 @@ struct SettingsView:View {
     var body:some View {
         VStack(alignment:.leading,spacing:20){
             HStack{Text("设置").font(.title2.bold());Spacer();Button("完成"){dismiss()}.keyboardShortcut(.cancelAction)}
-            HStack(spacing:12){Button("辅助功能"){page=0}.tint(page==0 ? .teal : .gray);Button("弹窗处理"){page=1}.tint(page==1 ? .teal : .gray);Spacer()}.buttonStyle(.bordered).controlSize(.large)
+            HStack(spacing:12){Button("辅助功能"){page=0}.tint(page==0 ? .teal : .gray);Button("弹窗处理"){page=1}.tint(page==1 ? .teal : .gray);Button("关于与更新"){page=2}.tint(page==2 ? .teal : .gray);Spacer()}.buttonStyle(.bordered).controlSize(.large)
             ScrollView {
                 VStack(alignment:.leading,spacing:20){
                     if page==0 {
@@ -27,7 +27,7 @@ struct SettingsView:View {
                         Divider()
                         Toggle("世界 / 联盟聊天红包自动领取",isOn:$model.redPacketEnabled)
                         Text("发现、领取结果和经服务器核验的金额，可在事件记录中查看。").font(.caption).foregroundStyle(.secondary)
-                    } else {
+                    } else if page==2 {AboutUpdateView()} else {
                         Text("弹窗处理").font(.headline)
                         Toggle("连接服务器失败：自动确认重连",isOn:$model.autoReconnect)
                         Toggle("异地登录：自动确认",isOn:$model.replacedConfirmEnabled)
