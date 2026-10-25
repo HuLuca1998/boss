@@ -1,7 +1,7 @@
 {
   "app": "/Applications/首领助手.app",
   "bundle_identifier": "local.luca.HeroBossAssistant",
-  "version": "1.3.7",
+  "version": "1.3.9",
   "supported_game_version": "1.16.3",
   "architecture": "arm64",
   "tests": {
@@ -14,8 +14,8 @@
     "scoped_permission_persistence": "passed: installed release injected again without folder selection",
     "relaunch_without_reinjection": "passed: installed app reopened, existing injected game reconnected and current 16-boss list loaded"
   },
-  "executable_sha256": "5ccd4b6b46ab98f034b37bd6ad0bc8516d93fee5f0a02f0c73858c2ebec30c27",
-  "final_state": "Installed1.3.7 fixed local signing; Input Monitoring granted and retained through a subsequent resource-changing re-sign/install/relaunch. Final runtime connected; user confirmed ESC works. Hunt intent preserved.",
+  "executable_sha256": "cd8f16d470cdf294c0acd2ebc5c8c199ef2e39978df75388737e7372461a3a65",
+  "final_state": "Installed official1.3.9 by app one-click GitHub download/verify/install/relaunch. Input Monitoring retained; existing login safety lock preserved; game process unchanged; saved area7 and event data retained.",
   "keyboardControl": {
     "date": "2026-10-22",
     "startupErrorFixed": "Initialize keyboard handlers only when enabled after stage is ready",
@@ -167,5 +167,17 @@
     "tests": "keyboard runtime passes original CommonTab return, direct BaseView BagView, held key, typing, custom callback, unknown modal, passive ticker exclusion; assistance/location regressions pass.",
     "live": "User confirmed function usable 2026-10-26. Activity.log:01:38:58 ESC BagView1013,01:39:05 and01:39:10 LotteryShopView1204,01:39:06/10 view1258,01:39:13 ShopView1043 invoked original return. CUA observed field scene after return. No purchase performed.",
     "cause": "BagView directly inherits BaseView; old BaseMultiActivityView-only rule missed it. Native privilege also missing on prior ad hoc build. Live ESC telemetry revealed passive NotifyMsgView1005 obstructing candidate selection; now excludes known game passive ticker names."
+  },
+  "release_update_1_3_9": {
+    "date": "2026-10-26",
+    "repository": "https://github.com/HuLuca1998/boss",
+    "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.3.9",
+    "release_commit": "8c43eee",
+    "archive_sha256": "457aa5a64135cb64557fa1aeff1484478a74990be75e0e3b7aca81e70a15dc64",
+    "automated": "Runtime keyboard/assistance/location pass. Numeric versions, stable asset filtering, checksum/HTTPS/ZIP path/symlink policy pass. Temporary signed installer tests: wrong version/signer and tampering rejected; failure rolled back; replacement passed. GitHub CI main and tag success40219026973/40219027349.",
+    "actual_pipeline": "A same-certificate bootstrap based on corrected updater code with displayed old version1.3.8 checked published GitHub1.3.9, downloaded actual11MB ZIP, SHA256 and signature verified, dismissed settings, normally exited, atomically replaced app and auto-reopened. This is an updater-bootstrap test, not a claim that unmodified released1.3.8 has the fixed exit flow.",
+    "actual_preservation": "Native UI1.3.9; Input Monitoring authorized; same game PID3964 before/after; continuousHuntArea7; local event/popup/redpacket/key data sizes did not shrink; existing account recovery protection remains paused.",
+    "discovered_and_fixed": "First1.3.8 real test downloaded and verified but settings sheet prevented termination. Installer timed out without modifying app.1.3.9 dismisses sheet and returns terminateNow after task cleanup. CI missing local-analysis fixture moved into Tests/Fixtures.1.3.8 retained as prerelease; assets not overwritten.",
+    "limits": "Tested this Apple Silicon Mac only. Local fixed certificate, no Apple Developer ID notarization; other machines not verified. No download resume. Game runtime upgrade remains an explicit separate injection; updater never restarts game."
   }
 }
