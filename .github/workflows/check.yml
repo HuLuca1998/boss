@@ -15,4 +15,6 @@ jobs:
           node BossAssistant/Tests/assistance-runtime.cjs
           node BossAssistant/Tests/location-runtime.cjs
           zsh scripts/test-update.sh
+          swiftc BossAssistant/Sources/GameCachePolicy.swift BossAssistant/Tests/GameCachePolicyTests.swift -o /tmp/game-cache-tests
+          /tmp/game-cache-tests BossAssistant/Resources
           swiftc -swift-version 5 BossAssistant/Sources/UpdatePolicy.swift BossAssistant/Updater/main.swift -o /tmp/BossAssistantUpdater -framework AppKit -framework Security

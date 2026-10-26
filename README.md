@@ -1,5 +1,7 @@
 # 首领助手
 
+> **⚠️ 仅供学习研究使用，请勿用于商业用途或破坏游戏正常秩序。**
+
 勇者联盟的原生 macOS 辅助工具：检测首领、持续攻略、处理已适配弹窗、记录红包与事件，并提供游戏前台键盘控制。
 
 [下载正式版](https://github.com/HuLuca1998/boss/releases/latest) · [所有版本](https://github.com/HuLuca1998/boss/releases) · [发布与测试流程](docs/发布与更新.md)
@@ -10,7 +12,7 @@
 | --- | --- |
 | 系统 | macOS 14 及以上 |
 | 芯片 | Apple Silicon，arm64（M 系列）；未提供 Intel 版本 |
-| 游戏 | 本机运行的勇者联盟 1.16.3；新版本需要重新适配 |
+| 游戏 | 本机运行的勇者联盟 1.16.3；支持 Main-40920 与 Main-f648a 热更新，未知脚本拒绝注入 |
 | 运行方式 | 原生 SwiftUI 助手 + 本机回环连接，仅修改已适配游戏缓存，不修改游戏 App 签名 |
 | 网络 | 游戏服务器；软件更新需要访问 GitHub 及其下载服务 |
 | 权限 | 游戏缓存目录访问；键盘功能需要 macOS 输入监控 |
@@ -40,7 +42,7 @@
 ## 安装与使用
 
 1. 从 Releases 下载 `BossAssistant-x.y.z-macos-arm64.zip`，解压并将“首领助手.app”放到 `/Applications`。
-2. 首次打开助手，点击“注入脚本”，按需选择游戏 appCache 目录。先备份原始缓存，再正常重启游戏一次；未适配游戏版本拒绝注入。
+2. 首次打开助手，点击“注入脚本”，按需选择游戏 appCache 目录。先备份原始缓存，再正常重启游戏一次；按当前热更新目录识别真实主脚本，未适配版本拒绝注入。
 3. 进入角色后，确认实际区域和最新首领列表，点击“开始自动攻略”。“停止攻击”是主动结束任务的入口。
 4. 设置 → 辅助功能，选择键盘、红包与区域 BOSS 选项；键盘权限未生效会明确提示。
 5. 设置 → 弹窗处理，选择处理类型；事件记录中查看红包和弹窗详细数据。
@@ -69,6 +71,8 @@ zsh BossAssistant/build.sh
 node BossAssistant/Tests/keyboard-runtime.cjs
 node BossAssistant/Tests/assistance-runtime.cjs
 node BossAssistant/Tests/location-runtime.cjs
+swiftc BossAssistant/Sources/GameCachePolicy.swift BossAssistant/Tests/GameCachePolicyTests.swift -o /tmp/game-cache-tests
+/tmp/game-cache-tests BossAssistant/Resources
 zsh scripts/test-update.sh
 zsh scripts/test-update.sh --installer
 ```
@@ -78,3 +82,5 @@ zsh scripts/test-update.sh --installer
 安装器测试仅操作临时应用副本。GitHub CI 不持有私钥；正式包在签名 Mac 上构建发布。私钥不提交、不上传，证书缺失则拒绝构建。
 
 完整版本、发布、恢复和本机一键更新步骤见 [发布与更新](docs/发布与更新.md)。规范参考 [HuLuca1998/acpp](https://github.com/HuLuca1998/acpp) 的标签、Release 和“关于与更新”流程，本软件使用原生 Swift 更新器。
+
+热更新适配按当前 DCC 目录中的主脚本名称、对象编号与原始内容 SHA256 共同校验。注入和还原只处理当前主脚本及对应编译缓存，原始备份按内容哈希分目录保存。未知热更新会停止操作并提示；断连时键盘、红包与弹窗显示等待连接。

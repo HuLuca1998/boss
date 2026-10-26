@@ -4,7 +4,7 @@
 
 - Sources：SwiftUI 应用、本机桥、键盘、事件与更新客户端。
 - Resources/Runtime.js：适配游戏 1.16.3 的控制脚本，仅明确重新注入时更新游戏缓存并重启游戏。
-- Resources/OriginalCache.bin：与 Injector.originalHash 匹配的原始缓存，注入与还原所需。
+- Resources/OriginalCache*.bin：与 GameCacheProfile 中每个热更新版本的 SHA256 匹配的原始缓存，注入与还原所需。
 - Updater：固定签名验证、等待正常退出、安装和失败回滚，不重启游戏。
 - Tests：键盘、恢复、场景、弹窗、红包与更新策略测试。
 - VERSION / BUILD_NUMBER：版本号和递增构建号。
@@ -16,3 +16,5 @@
 ESC 按游戏 GetOpenViewOrder 选择最上层页面，排除已确认的被动提示层，调用原始 CommonTab2/3SubView、CommonBg2/3SubView、LotteryShopView 或普通空白关闭处理。根页面必须匹配。BagView 和 StoreView 直接继承 BaseView，不能只按 BaseMultiActivityView 分类。每按一次执行一层，输入文字时不处理，自定义确认、购买、领取回调不作为返回。
 
 本机 analysis 目录、构建产物、现场观测、旧 App 与连接凭据不纳入 Git。
+
+GameCachePolicy 解析当前 DCC head、js 目录和唯一 Main 脚本，校验脚本名与对象编号；Injector 校验原始内容并在正常退出后重新确认目录根与操作前字节，分版本备份、写入校验、失败回滚。未知版本与符号链接路径拒绝操作。

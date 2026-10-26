@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "BossAssistant"
@@ -54,6 +55,10 @@ def main():
     for test in ["keyboard-runtime.cjs", "assistance-runtime.cjs", "location-runtime.cjs"]:
         run("node", str(APP / "Tests" / test))
     run("zsh", str(ROOT / "scripts/test-update.sh"))
+    with tempfile.TemporaryDirectory(prefix="boss-cache-tests-") as folder:
+        tests = str(Path(folder) / "game-cache-tests")
+        run("swiftc", str(APP / "Sources/GameCachePolicy.swift"), str(APP / "Tests/GameCachePolicyTests.swift"), "-o", tests)
+        run(tests, str(APP / "Resources"))
     env = dict(os.environ, APP_OUT=str(output), APP_VERSION=version)
     run("zsh", str(APP / "build.sh"), env=env)
     bundle = output / "首领助手.app"

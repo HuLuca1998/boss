@@ -12,6 +12,7 @@ struct Boss:Codable,Identifiable,Hashable {
     var countdown:String {guard let cdSeconds else{return "—"};let v=max(0,Int(cdSeconds));return v==0 ? "可前往" : String(format:"%02d:%02d",v/60,v%60)}
 }
 struct Snapshot:Codable {
+    var scriptIdentity:String?=nil
     var navigation:BossNavigation?=nil
     var areaBossKey:AreaBossKey?=nil
     var areaBossVersion:Int?=nil

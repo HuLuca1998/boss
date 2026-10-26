@@ -48,8 +48,9 @@ import CoreGraphics
     @Published var currentTarget:String?
     @Published var verified=0
     @Published var injected=false
+    @Published private(set) var cacheMessage="正在识别游戏版本…"
     @Published var keyboardEnabled=false
-    private var keyboardActive=false
+    @Published private var keyboardActive=false
     @Published var keyboardWorking=false
     @Published var keyboardInputAllowed=false
     @Published var lastDetected:Date?
@@ -103,6 +104,7 @@ import CoreGraphics
         if let url=Bundle.main.url(forResource:"Catalog",withExtension:"json"),let data=try? Data(contentsOf:url){catalog=(try? JSONDecoder().decode([CatalogBoss].self,from:data)) ?? []}
         if let url=Bundle.main.url(forResource:"Regions",withExtension:"json"),let data=try? Data(contentsOf:url){regions=(try? JSONDecoder().decode([Region].self,from:data)) ?? []}
         injected=injector.installed
+        cacheMessage=injector.cacheDescription
         bridge.onReady={ [weak self] port in
             guard let self else{return}
             let data=try? JSONSerialization.data(withJSONObject:["token":token,"port":Int(port)])
@@ -114,6 +116,7 @@ import CoreGraphics
             self.connectionGeneration+=1
             let connection=self.connectionGeneration
             if state {
+                self.injected=true
                 self.log("游戏已连接");self.message="等待游戏角色就绪…"
                 Task {
                     for _ in 0..<25 {
@@ -128,6 +131,13 @@ import CoreGraphics
                 self.keyboardActive=false
                 self.keyboardController?.enabled=false
                 self.snapshot=nil
+                self.lastDetected=nil
+                self.popupHandlingAvailable=false
+                self.popupRecordingActive=false
+                self.pendingKeyboardKeys=nil
+                self.assistMessage="游戏未连接 · 自动重连、红包与弹窗处理等待连接"
+                self.cacheMessage=self.injector.cacheDescription
+                self.injected=self.injector.installed
                 self.message="游戏连接已断开"
                 if self.running {self.continuity.manualInput(pressed:false,now:ProcessInfo.processInfo.systemUptime);self.continuity.pause(.connection,now:ProcessInfo.processInfo.systemUptime);self.huntPaused=true;self.huntArmed=false;self.currentTarget=nil;self.message="游戏连接中断，任务保持；每3秒检测，60秒后尝试恢复";self.log(self.message)}
             }
@@ -148,6 +158,10 @@ import CoreGraphics
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds:3_000_000_000)
                 guard let self else{return}
+                if !self.connected && !self.working {
+                    let description=self.injector.cacheDescription
+                    if description != self.cacheMessage {self.cacheMessage=description;self.injected=self.injector.installed}
+                }
                 if self.connected && !self.working && !self.running {
                     do {
                         let needsDetection=self.snapshot == nil
@@ -237,6 +251,7 @@ import CoreGraphics
             }
             assistUnsupportedLogged=false
         } catch {
+            guard connected,connectionGeneration==connection else{return}
             if error.localizedDescription=="unsupported_operation" {
                 assistMessage="当前游戏脚本需更新，重连确认与红包监控尚未启用"
                 if !assistUnsupportedLogged {log(assistMessage);assistUnsupportedLogged=true}
@@ -250,6 +265,15 @@ import CoreGraphics
         Task{await pollAssistance()}
     }
     var areaName:String {snapshot?.areaName ?? regions.first{$0.id==snapshot?.areaId}?.name ?? "等待检测"}
+    var keyboardDescription:String {
+        if !keyboardEnabled{return "键盘控制已关闭"}
+        if !connected{return "方向键 / WASD / ESC 等待游戏连接"}
+        if !keyboardInputAllowed{return "键盘控制等待输入监控授权"}
+        return keyboardActive ? "方向键 / WASD / ESC 已开启" : "键盘控制等待游戏就绪"
+    }
+    var assistanceDescription:String {
+        connected ? assistMessage : (recoveryLocked ? "异地登录保护保持 · 游戏未连接，辅助功能等待连接" : "游戏未连接 · 自动重连、红包与弹窗处理等待连接")
+    }
     var hasFreshSnapshot:Bool {connected && lastDetected.map{Date().timeIntervalSince($0)<10} == true}
     var rows:[Boss] {
         let area=selectedArea ?? snapshot?.areaId
@@ -294,6 +318,7 @@ import CoreGraphics
             lastAreaBossKey=key
         }
         snapshot=value
+        if let script=value.scriptIdentity {cacheMessage="游戏已连接 · \(script)"}
         if let values=value.areas {regions=values}
         if selectedArea==nil {selectedArea=value.areaId}
         lastDetected=Date()
@@ -328,7 +353,7 @@ import CoreGraphics
     func inject()async {
         guard !working,bridge.port != 0 else{return};working=true;defer{working=false}
         if running {await pauseHunt(.maintenance,text:"正在更新脚本，任务保持，完成后自动恢复")}
-        do{message="正在备份并注入脚本…";try await injector.inject(port:bridge.port,token:bridge.token);injected=true;message="注入完成，等待游戏进入角色界面";log("脚本已注入，原始缓存已备份；游戏已重启")}
+        do{message="正在识别当前版本并备份注入…";try await injector.inject(port:bridge.port,token:bridge.token);injected=true;cacheMessage=injector.cacheDescription;message="脚本已写入，等待游戏连接验证";log("当前版本脚本已写入，原始缓存已分版本备份；游戏已重启，等待连接验证")}
         catch{message="注入未完成";errorText=error.localizedDescription}
     }
     func restore()async {

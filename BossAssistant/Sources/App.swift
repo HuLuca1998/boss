@@ -45,8 +45,9 @@ struct MainView:View {
                         TableColumn("编号"){b in Text(String(b.bossId)).font(.system(size:11,design:.monospaced)).foregroundStyle(.tertiary)}.width(78)
                     }.tableStyle(.inset(alternatesRowBackgrounds:true)).frame(minHeight:210)
                 }.background(Color.white.opacity(0.03),in:RoundedRectangle(cornerRadius:14)).clipShape(RoundedRectangle(cornerRadius:14)).overlay(RoundedRectangle(cornerRadius:14).stroke(Color.white.opacity(0.06)))
-                HStack{Label(model.keyboardEnabled ? (model.keyboardInputAllowed ? "方向键 / WASD / ESC 已开启" : "键盘控制等待输入监控授权") : "键盘控制已关闭",systemImage:"keyboard").font(.caption).foregroundStyle(.secondary);Spacer();Button("辅助功能与弹窗设置"){showSettings=true}}
-                Text(model.assistMessage).font(.caption).foregroundStyle(model.recoveryLocked ? Color.orange : .secondary).fixedSize(horizontal:false,vertical:true)
+                HStack{Label(model.keyboardDescription,systemImage:"keyboard").font(.caption).foregroundStyle(.secondary);Spacer();Button("辅助功能与弹窗设置"){showSettings=true}}
+                Text(model.assistanceDescription).font(.caption).foregroundStyle(model.recoveryLocked ? Color.orange : .secondary).fixedSize(horizontal:false,vertical:true)
+                if !model.connected {Text(model.cacheMessage).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)}
                 HStack(spacing:12){
                     Image(systemName:model.huntPaused ? "pause.circle" : model.running ? "waveform.path" : "checkmark.shield").foregroundStyle(teal)
                     VStack(alignment:.leading,spacing:5){Text(model.message).font(.system(size:13,weight:.medium));Text(model.running ? "本次已核验 \(model.verified) 个 · 每3秒检测 · 异常60秒重试" : "在游戏内直接寻路 · 不占用鼠标和键盘").font(.caption).foregroundStyle(.secondary)}
@@ -62,7 +63,7 @@ struct MainView:View {
         .sheet(isPresented:$showSettings){SettingsView(model:model)}
         .sheet(isPresented:$showEvents){EventHistoryView(model:model)}
         .onReceive(NotificationCenter.default.publisher(for:Notification.Name("BossAssistantInstallReady"))){_ in showSettings=false;showEvents=false}
-        .alert("注入脚本",isPresented:$showInject){Button("取消",role:.cancel){};Button("备份并注入"){Task{await model.inject()}}}message:{Text("将备份游戏缓存，注入本地控制脚本，并重启游戏一次。游戏应用与系统安全设置保持原状。当前适配版本：1.16.3。")}
+        .alert("注入脚本",isPresented:$showInject){Button("取消",role:.cancel){};Button("备份并注入"){Task{await model.inject()}}}message:{Text("将识别当前热更新版本，分版本备份原始缓存，注入脚本并重启游戏一次。支持游戏 1.16.3 的已适配热更新，未知版本会停止并提示。")}
         .alert("还原原始脚本",isPresented:$showRestore){Button("取消",role:.cancel){};Button("还原并重启"){Task{await model.restore()}}}message:{Text("将暂停派发并保留攻略任务，恢复原始游戏脚本，并重启游戏。")}
         .alert("操作提示",isPresented:Binding(get:{model.errorText != nil},set:{if !$0{model.errorText=nil}})){Button("知道了"){model.errorText=nil}}message:{Text(model.errorText ?? "")}
     }
