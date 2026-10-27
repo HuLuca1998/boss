@@ -184,5 +184,30 @@
     "live": "Installed1.4.0 fixed signer. Injected current DCC object, reconnected, redleaf17 rows and key1/3 loaded. Keyboard authorized, ESC1013 event. Started normal hunt: 金牙食人魔19:47:00,织网地穴领主19:47:10,熔岩巨人19:47:21 cooldowns observed; stopped, follow cancelled and auto battle disabled. Current-version restore SHA256 matches bundled Main-f648a original. Restore completed, reinjection reconnected with17rows again.",
     "tests": "GameCachePolicy: both profiles, directory identity, original hashes, patch identity, unknown/mismatched/ambiguous/truncated trees, path traversal and dangling symlink rejection pass. Runtime keyboard/assistance/location and temporary signed updater installer tests pass.",
     "limits": "Natural redpacket awards, actual regional key spending, all popup branches not reverified. Unknown future hot updates refused. Not cross-machine tested."
+  },
+  "nearby_target_panel_1_4_1": {
+    "date": "2026-10-26",
+    "status": "Local signed1.4.1 build installed; not yet published",
+    "static": "REA analyzed5 extracted classes,95502bytes,25986AST nodes,zero parse failures; dynamic dependencies remain partial. Original EntityClickHelper.OnClickMonster enforces lock_distance/100 then calls ClientStateSyncUtils.SetLocalHeroAISelectTargetEid. Controller request differs from applied playerSelectedTargetEid; UI distinguishes them.",
+    "live": "In trial observation,6 distinct skeleton entities (including same-name archers/mages) displayed with independent IDs and continuously changing HP. Selected entity786441 shown applied while HP changed. Compact view showed all6 rows at once with percentages only. On latest native build, inactive floating panel remained available after game focus; hidesOnDeactivate=false,isFloatingPanel=true.",
+    "automation": "Separate automatic highest-current-HP toggle,defaultoff; manual selection turns it off. Live automatic retargeting not independently verified because user was actively operating the game.",
+    "tests": "targeting-runtime checks living enemies/native radius/HP order/native click/requested-vs-applied/highest toggle/ties/manual override/dead-stale-loading-teleport-account guards/owned cleanup/disconnect. Existing keyboard,assistance,location runtime tests pass. Native build and installed signature pass.",
+    "limits": "Only client-loaded living enemy monsters within native lock distance are listed; no whole-map discovery or player targeting. Multi-column overflow is implemented; only6-row layout visually verified. Minimized/full-screen Space behavior not separately rechecked."
+  },
+  "boss_equipment_filter_1_4_1": {
+    "date": "2026-10-27",
+    "status": "Local signed build26 installed; unpublished",
+    "data": "303 boss entries;285 have equipment part previews. Game reward-preview configuration and original UI reward helpers used; missing preview remains unknown.",
+    "tests": "BossSelectionTests pass: per-area identity, default all, explicit none, OR part matching, unknown exclusion, visible bulk changes preserve hidden choices, persistence,303 entries and Broodmother60-66 weapon/cloak fixture. Existing four runtime suites pass. Native build and installed signature pass.",
+    "live_ui": "Redleaf17/17 -> weapon6/6 -> weapon+cloak6/6 -> unchecked Broodmother5/6 -> unrestricted16/17. Restored unrestricted17/17. Drop parts and levels visible. Existing Abyss dungeon hunt pause retained; no game restart.",
+    "limits": "Preview describes possible equipment categories and levels, not guaranteed loot. Live deselection during an active wild target was not exercised; selection policy covered by tests. Table supports horizontal scrolling at narrow widths."
+  },
+  "follow_toast_fix": {
+    "date": "2026-10-27",
+    "build": 27,
+    "cause": "Locked assistRun unconditionally called ChangeAutoSkill(false) every poll even with hunt stopped; original WildModel.ChangeAutoSkill in WildSync rejects nonleader through CheckWildSyncMemberOperateForbid -> ShowSysMsg4323. Native UI confirmed hunt stopped and recovery lock active.",
+    "regression": "Old runtime fails100 idle locked polls with100 ChangeAutoSkill attempts; patched runtime passes with0. Four runtime suites pass; native build/signature pass.",
+    "fix": "Persistent native account lock polls read-only status rather than repeated assistRun (first newly observed lock still delivered to shut down existing automation). Runtime lock clears only owned hunt, auto changes bypass following members, hunt entry refuses team_following before mutation.",
+    "deployment": "Native build27 installed. Old injected runtime remains until next explicit reinjection; native workaround active without game restart. Live following scene after fix not yet reverified."
   }
 }

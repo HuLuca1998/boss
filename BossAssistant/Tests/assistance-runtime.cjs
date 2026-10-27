@@ -88,3 +88,19 @@ cache.set('fast-live',{id:'fast-live',channel_id:1000,session_id:0,money_type:1,
 rpc('assistRun',{redPackets:false,fastRedPackets:true});beforeFast=grants;events.chat({data:msg(1000,'disabled-live')});assert.equal(grants,beforeFast,'Off switch disables immediate claims');
 rpc('assistRun',{redPackets:true,fastRedPackets:true,locked:true});events.chat({data:msg(1000,'locked-live')});assert.equal(grants,beforeFast,'Account lock disables immediate claims');
 console.log('PASS: immediate live packet claim, no pre-query, zero callback delay, 200ms burst spacing, server verification, dedupe/off/lock');
+
+// Reproduce the original game's follow rejection while no hunt is running.
+let followToasts=0,autoChanges=0;
+context.WildModel={inst:{CheckIsWildSync:()=>true,IsWildSyncLeader:()=>false,ChangeAutoSkill(){followToasts++;}}};
+context.CombatMgr.inst.GetBattleBySceneType=()=>({_fighting:true,battleData:{world:{battleInitData:{}},CheckCurHeroCreated:()=>true}});
+context.CombatMgr.inst.GetCurRenderSceneType=()=>1;
+context.WildIdleModel.inst.GetFieldCfg=()=>({field_name:'field'});
+for(let i=0;i<100;i++)rpc('assistRun',{locked:true});
+assert.equal(followToasts,0,'Account protection with hunt off must never repeatedly change followed auto combat');
+socket.onmessage({data:JSON.stringify({id:++id,op:'attackMode',areaId:7})});
+assert.equal(socket.last.error,'account_recovery_locked');
+rpc('assistRun',{locked:false});
+socket.onmessage({data:JSON.stringify({id:++id,op:'attackMode',areaId:7})});
+assert.equal(socket.last.error,'team_following','Following blocks hunt before any combat mutation');
+assert.equal(followToasts,0);
+console.log('PASS: 100 locked idle polls and following attack guard produce no follow rejection notifications');

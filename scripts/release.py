@@ -52,13 +52,16 @@ def main():
     output = APP / "build" / "release" / version
     if output.exists():
         raise SystemExit(f"构建目录已存在：{output}；检查旧产物后移走再试")
-    for test in ["keyboard-runtime.cjs", "assistance-runtime.cjs", "location-runtime.cjs"]:
+    for test in ["keyboard-runtime.cjs", "assistance-runtime.cjs", "location-runtime.cjs", "targeting-runtime.cjs"]:
         run("node", str(APP / "Tests" / test))
     run("zsh", str(ROOT / "scripts/test-update.sh"))
     with tempfile.TemporaryDirectory(prefix="boss-cache-tests-") as folder:
         tests = str(Path(folder) / "game-cache-tests")
         run("swiftc", str(APP / "Sources/GameCachePolicy.swift"), str(APP / "Tests/GameCachePolicyTests.swift"), "-o", tests)
         run(tests, str(APP / "Resources"))
+        selection_tests = str(Path(folder) / "boss-selection-tests")
+        run("swiftc", str(APP / "Sources/BossSelection.swift"), str(APP / "Tests/BossSelectionTests.swift"), "-o", selection_tests)
+        run(selection_tests, str(APP / "Resources"))
     env = dict(os.environ, APP_OUT=str(output), APP_VERSION=version)
     run("zsh", str(APP / "build.sh"), env=env)
     bundle = output / "首领助手.app"

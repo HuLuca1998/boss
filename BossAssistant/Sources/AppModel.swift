@@ -32,6 +32,13 @@ import CoreGraphics
     private var popupAcks:[String:Int]=[:]
     private var popupSeen=Set<String>()
     private var assistUnsupportedLogged=false
+    @Published private(set) var targetAutoHighest=false
+    @Published private(set) var targetingEnabled=false
+    @Published private(set) var targetBusy=false
+    @Published private(set) var nearbyTargets:NearbyTargetStatus?
+    @Published private(set) var targetMessage="开启后显示当前范围内的怪物"
+    private var targetTask:Task<Void,Never>?
+    private var targetGeneration=0
     @Published var connected=false
     @Published var working=false
     @Published private var continuity=HuntContinuity()
@@ -45,6 +52,15 @@ import CoreGraphics
     @Published var activities:[Activity]=[]
     @Published var message="正在启动本地连接服务…"
     @Published var errorText:String?
+    @Published private var bossSelection:BossSelection = {
+        guard let data=UserDefaults.standard.data(forKey:"bossSelection"),let value=try? JSONDecoder().decode(BossSelection.self,from:data) else{return BossSelection()}
+        return value
+    }()
+    private var bossDrops:[String:BossDropInfo]=[:]
+    @Published private(set) var equipmentParts:[EquipmentPart]=[]
+    private var currentHuntBoss:Boss?
+    private var selectionStopPending=false
+    private var selectionStopBusy=false
     @Published var currentTarget:String?
     @Published var verified=0
     @Published var injected=false
@@ -103,6 +119,8 @@ import CoreGraphics
         keyboardEnabled=keyboardPreferred
         if let url=Bundle.main.url(forResource:"Catalog",withExtension:"json"),let data=try? Data(contentsOf:url){catalog=(try? JSONDecoder().decode([CatalogBoss].self,from:data)) ?? []}
         if let url=Bundle.main.url(forResource:"Regions",withExtension:"json"),let data=try? Data(contentsOf:url){regions=(try? JSONDecoder().decode([Region].self,from:data)) ?? []}
+        if let url=Bundle.main.url(forResource:"BossDrops",withExtension:"json"),let data=try? Data(contentsOf:url){bossDrops=(try? JSONDecoder().decode([String:BossDropInfo].self,from:data)) ?? [:]}
+        if let url=Bundle.main.url(forResource:"EquipmentParts",withExtension:"json"),let data=try? Data(contentsOf:url){equipmentParts=(try? JSONDecoder().decode([EquipmentPart].self,from:data)) ?? []}
         injected=injector.installed
         cacheMessage=injector.cacheDescription
         bridge.onReady={ [weak self] port in
@@ -130,6 +148,10 @@ import CoreGraphics
             else {
                 self.keyboardActive=false
                 self.keyboardController?.enabled=false
+                self.targetAutoHighest=false
+                self.nearbyTargets=nil
+                self.targetGeneration+=1
+                self.targetMessage="等待游戏连接"
                 self.snapshot=nil
                 self.lastDetected=nil
                 self.popupHandlingAvailable=false
@@ -154,6 +176,13 @@ import CoreGraphics
                 try? await Task.sleep(nanoseconds:500_000_000)
             }
         }
+        targetTask=Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else{return}
+                if self.targetingEnabled && self.connected && !self.working && !self.targetBusy {await self.pollNearbyTargets()}
+                try? await Task.sleep(nanoseconds:500_000_000)
+            }
+        }
         monitor=Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds:3_000_000_000)
@@ -171,6 +200,64 @@ import CoreGraphics
                 }
             }
         }
+    }
+    private func updateNearbyTargets(_ status:NearbyTargetStatus){
+        nearbyTargets=status;targetAutoHighest=status.autoHighest
+        NearbyTargetPanel.fit(count:status.rows.count)
+        targetMessage=status.locked ? "账号保护中 · 集火操作暂停" : !status.ready ? "等待角色或场景就绪" : status.autoHighest ? "自动集火 · \(status.rows.count) 个怪物，按当前血量排序" : "手动选择 · \(status.rows.count) 个怪物，按当前血量排序"
+    }
+    private func pollNearbyTargets()async {
+        let connection=connectionGeneration,request=targetGeneration
+        do {
+            // Automatic selection runs only when explicitly enabled; disconnect clears it.
+            let data=try await bridge.request("targetMode",fields:["enabled":true,"autoHighest":targetAutoHighest,"locked":recoveryLocked])
+            guard connected,targetingEnabled,connectionGeneration==connection,targetGeneration==request else{return}
+            updateNearbyTargets(try JSONDecoder().decode(NearbyTargetStatus.self,from:data))
+        } catch {
+            guard connectionGeneration==connection,targetGeneration==request else{return}
+            nearbyTargets=nil;targetMessage=error.localizedDescription=="unsupported_operation" ? "请重新注入脚本以启用附近怪物列表" : "列表更新失败：\(error.localizedDescription)"
+        }
+    }
+    func closeNearbyTargets(){
+        targetingEnabled=false;targetAutoHighest=false;nearbyTargets=nil;targetGeneration+=1
+        targetMessage="附近怪物列表已关闭"
+        Task{if connected {_ = try? await bridge.request("targetMode",fields:["enabled":false])}}
+    }
+    func setTargetEnabled(_ enabled:Bool)async {
+        if !enabled {closeNearbyTargets();return}
+        guard !targetBusy else{return}
+        targetBusy=true;defer{targetBusy=false};targetGeneration+=1
+        targetingEnabled=enabled;targetAutoHighest=false;nearbyTargets=nil
+        if enabled, running {await pauseHunt(.manual,text:"附近怪物选择已开启 · 首领巡检暂停，关闭后恢复")}
+        if connected {
+            do {
+                let data=try await bridge.request("targetMode",fields:["enabled":enabled,"autoHighest":false,"locked":recoveryLocked])
+                if enabled {updateNearbyTargets(try JSONDecoder().decode(NearbyTargetStatus.self,from:data))}
+            } catch {targetMessage="操作未完成：\(error.localizedDescription)";return}
+        }
+        if !enabled {targetMessage="附近怪物列表已关闭"}
+        else if !connected {targetMessage="等待游戏连接"}
+    }
+    func setTargetAuto(_ enabled:Bool)async {
+        guard targetingEnabled,connected,!targetBusy,(!enabled || !recoveryLocked) else{return}
+        targetBusy=true;defer{targetBusy=false};targetGeneration+=1;targetAutoHighest=enabled
+        let connection=connectionGeneration,request=targetGeneration
+        do {
+            let data=try await bridge.request("targetMode",fields:["enabled":true,"autoHighest":enabled,"locked":recoveryLocked])
+            guard connected,targetingEnabled,connectionGeneration==connection,targetGeneration==request else{return}
+            updateNearbyTargets(try JSONDecoder().decode(NearbyTargetStatus.self,from:data))
+        } catch {targetAutoHighest=false;targetMessage="自动集火设置失败：\(error.localizedDescription)"}
+    }
+    func selectNearbyMonster(_ monster:NearbyMonster)async {
+        guard targetingEnabled,connected,!targetBusy,!recoveryLocked,let status=nearbyTargets,status.ready else{return}
+        targetBusy=true;defer{targetBusy=false};targetGeneration+=1
+        let connection=connectionGeneration,request=targetGeneration
+        do {
+            let data=try await bridge.request("targetSelect",fields:["scope":status.scope,"eid":monster.eid])
+            guard connected,targetingEnabled,connectionGeneration==connection,targetGeneration==request else{return}
+            updateNearbyTargets(try JSONDecoder().decode(NearbyTargetStatus.self,from:data))
+            log("已请求集火：\(monster.name) #\(monster.eid)",category:"战斗")
+        } catch {targetMessage=error.localizedDescription}
     }
     private func saveRecoveryPolicy(){if let data=try? JSONEncoder().encode(recoveryPolicy){UserDefaults.standard.set(data,forKey:"recoveryPolicy")}}
     private func recordReplacement(token:String,time:TimeInterval,source:String){
@@ -221,7 +308,8 @@ import CoreGraphics
             var fields:[String:Any]=["locked":recoveryLocked,"redPackets":redPacketEnabled,"fastRedPackets":true,"idleReward":idleRewardEnabled && (!popupOnlyWhileHunting || running),"blankClose":blankCloseEnabled && (!popupOnlyWhileHunting || running),"areaBossBox":areaBossBoxEnabled && running && !huntPaused,"huntArea":continuity.area ?? 0,"avoidNoKeyBoss":running && continuity.reason != .manual && continuity.reason != .away]
             if let session=status.popupSession {fields["popupAck"]=popupAcks[session] ?? 0}
             if !recoveryLocked,let dialog=status.dialog,dialog.canConfirm,((dialog.kind=="network" && autoReconnect) || (dialog.kind=="replaced" && replacedConfirmEnabled)){fields["confirmToken"]=dialog.token}
-            let result=try await bridge.request("assistRun",fields:fields)
+            // A locked idle assistant must remain read-only, including with older injected runtimes.
+            let result = recoveryLocked && wasLocked ? data : try await bridge.request("assistRun",fields:fields)
             guard connected,connectionGeneration==connection else{return}
             let updated=try JSONDecoder().decode(AssistStatus.self,from:result)
             recordPopups(updated)
@@ -275,13 +363,57 @@ import CoreGraphics
         connected ? assistMessage : (recoveryLocked ? "异地登录保护保持 · 游戏未连接，辅助功能等待连接" : "游戏未连接 · 自动重连、红包与弹窗处理等待连接")
     }
     var hasFreshSnapshot:Bool {connected && lastDetected.map{Date().timeIntervalSince($0)<10} == true}
-    var rows:[Boss] {
+    var unfilteredRows:[Boss] {
         let area=selectedArea ?? snapshot?.areaId
         if area==snapshot?.areaId && hasFreshSnapshot {return snapshot?.rows ?? []}
         return catalog.filter{$0.area_id==area && [2,3].contains($0.point_type)}.map(\.boss)
     }
+    var displayedArea:Int? {selectedArea ?? snapshot?.areaId}
+    var rows:[Boss] {unfilteredRows.filter{bossSelection.matches(parts:bossDrops[$0.id]?.parts)}}
+    var checkedRowCount:Int {guard let area=displayedArea else{return 0};return rows.filter{bossSelection.checked($0.id,area:area)}.count}
+    func bossIsChecked(_ boss:Boss)->Bool {displayedArea.map{bossSelection.checked(boss.id,area:$0)} ?? false}
+    func dropInfo(_ boss:Boss)->BossDropInfo? {bossDrops[boss.id]}
+    func wantsPart(_ id:Int)->Bool {bossSelection.desiredParts.contains(id)}
+    var hasPartFilter:Bool {!bossSelection.desiredParts.isEmpty}
+    private func knownBossIDs(area:Int)->Set<String> {
+        var ids=Set(catalog.filter{$0.area_id==area}.map{"\($0.instance_id)-\($0.point_id)"})
+        if snapshot?.areaId==area {ids.formUnion(snapshot?.rows.map(\.id) ?? [])}
+        return ids
+    }
+    private func allowsBoss(_ boss:Boss,area:Int)->Bool {bossSelection.permits(boss.id,area:area,parts:bossDrops[boss.id]?.parts)}
+    private func hasHuntSelection(area:Int)->Bool {
+        if snapshot?.areaId==area {return snapshot?.rows.contains{allowsBoss($0,area:area)} == true}
+        return catalog.filter{$0.area_id==area}.contains{allowsBoss($0.boss,area:area)}
+    }
+    private func saveBossSelection(){
+        if let data=try? JSONEncoder().encode(bossSelection){UserDefaults.standard.set(data,forKey:"bossSelection")}
+        if running,let area=continuity.area,
+           (currentHuntBoss.map{!allowsBoss($0,area:area)} == true || !hasHuntSelection(area:area)) {
+            selectionStopPending=true;huntArmed=false;currentTarget=nil;currentHuntBoss=nil
+            Task{await cancelUnselectedBoss()}
+        }
+    }
+    private func cancelUnselectedBoss()async {
+        guard selectionStopPending,!selectionStopBusy,connected else{return}
+        selectionStopBusy=true;defer{selectionStopBusy=false}
+        do {_ = try await bridge.request("stop");selectionStopPending=false;log("已停止未勾选或不符合部位筛选的目标，保留攻略任务")}
+        catch{message="选择已保存，等待游戏确认停止原目标"}
+    }
+    func setBossChecked(_ boss:Boss,_ selected:Bool){
+        guard let area=displayedArea else{return}
+        bossSelection.set(boss.id,area:area,selected:selected,knownIDs:knownBossIDs(area:area));saveBossSelection()
+    }
+    func setVisibleBossesChecked(_ selected:Bool){
+        guard let area=displayedArea else{return}
+        bossSelection.setVisible(Set(rows.map(\.id)),area:area,selected:selected,knownIDs:knownBossIDs(area:area));saveBossSelection()
+    }
+    func setWantedPart(_ id:Int,_ selected:Bool){
+        if selected {bossSelection.desiredParts.insert(id)} else{bossSelection.desiredParts.remove(id)}
+        saveBossSelection()
+    }
+    func clearPartFilter(){bossSelection.desiredParts=[];saveBossSelection()}
     var isCurrentArea:Bool {selectedArea==nil || selectedArea==snapshot?.areaId}
-    var canStart:Bool {connected && !working && !running && isCurrentArea && (snapshot?.areaId ?? 0)>0 && snapshot?.location != nil && (snapshot?.runtimeVersion ?? 0)>=3}
+    var canStart:Bool {checkedRowCount>0 && !selectionStopPending && !targetingEnabled && connected && !working && !running && isCurrentArea && (snapshot?.areaId ?? 0)>0 && snapshot?.location != nil && (snapshot?.runtimeVersion ?? 0)>=3}
     var locationDescription:String {
         if !hasFreshSnapshot {return "角色未就绪或数据已过期 · 列表等待重新检测"}
         guard let location=snapshot?.location else{return connected ? "需重新注入以启用当前位置检测" : "等待游戏连接"}
@@ -408,7 +540,7 @@ import CoreGraphics
             _ = try? await bridge.request("suspendHunt")
         }
     }
-    var canResumeHunt:Bool {running && huntPaused && !working}
+    var canResumeHunt:Bool {running && huntPaused && !working && !targetingEnabled && continuity.area.map{hasHuntSelection(area:$0)} == true}
     func resumeHunt(){
         guard canResumeHunt else{return}
         if recoveryLocked {unlockRecovery()}
@@ -424,6 +556,8 @@ import CoreGraphics
         recoveryWait=nil
     }
     func prepareForExit()async {
+        targetTask?.cancel()
+        if connected {_ = try? await bridge.request("targetMode",fields:["enabled":false])}
         assistTask?.cancel()
         // Keep the saved task for permission-driven relaunch and app updates.
         generation+=1;huntTask?.cancel();recoveryWait?.cancel()
@@ -432,7 +566,14 @@ import CoreGraphics
     private func isHunting(_ run:Int)->Bool {running && run==generation && !Task.isCancelled}
     private func waitForHuntArea(_ area:Int,run:Int)async throws {
         while isHunting(run) {
+            if selectionStopPending {
+                await cancelUnselectedBoss();await waitForRecovery();continue
+            }
             if working {
+                await waitForRecovery();continue
+            }
+            if targetingEnabled {
+                await pauseHunt(.manual,text:"附近怪物选择已开启 · 首领巡检暂停，关闭后恢复")
                 await waitForRecovery();continue
             }
             if recoveryLocked {
@@ -450,6 +591,10 @@ import CoreGraphics
             case .transition:
                 await pauseHunt(.unavailable,text:"场景加载中 · 任务保持，每3秒检测，60秒后尝试恢复")
             case .ready:
+                if !hasHuntSelection(area:area){
+                    huntPaused=true;huntArmed=false;message="没有勾选符合部位筛选的首领 · 任务保留，等待选择"
+                    await waitForRecovery();continue
+                }
                 if progress.stalled(now:ProcessInfo.processInfo.systemUptime) {
                     await pauseHunt(.stalled,text:"游戏画面暂未推进 · 任务保持，每3秒检测，等待恢复后继续")
                 } else if continuity.canResume(now:ProcessInfo.processInfo.systemUptime) {
@@ -458,11 +603,11 @@ import CoreGraphics
                         try await Task.sleep(nanoseconds:600_000_000)
                         try await readSnapshot();try Task.checkCancellation()
                         guard isHunting(run),let latest=snapshot else{throw CancellationError()}
-                        guard !working,!recoveryLocked,continuity.canResume(now:ProcessInfo.processInfo.systemUptime),HuntLocationGate.evaluate(latest,area:area) == .ready else{continue}
+                        guard !selectionStopPending,!targetingEnabled,!working,!recoveryLocked,hasHuntSelection(area:area),continuity.canResume(now:ProcessInfo.processInfo.systemUptime),HuntLocationGate.evaluate(latest,area:area) == .ready else{continue}
                         do {_=try await bridge.request("attackMode",fields:["areaId":area])}
                         catch {if error.localizedDescription == "hunt_scene_unavailable" {continue};throw error}
                         guard isHunting(run) else{throw CancellationError()}
-                        guard !working,!recoveryLocked,continuity.canResume(now:ProcessInfo.processInfo.systemUptime) else{continue}
+                        guard !selectionStopPending,!targetingEnabled,!working,!recoveryLocked,hasHuntSelection(area:area),continuity.canResume(now:ProcessInfo.processInfo.systemUptime) else{continue}
                         huntArmed=true;refreshTime=Date()
                         if huntPaused {log("角色与场景已就绪，重新检测并自动继续\(areaName)攻略")}
                         continuity.resumed();huntPaused=false;message="自动攻略中"
@@ -508,15 +653,15 @@ import CoreGraphics
                     guard self.isHunting(run) else{break}
                     guard let current=self.snapshot else{throw BridgeFailure(message:"等待场景数据恢复")}
                     guard HuntLocationGate.evaluate(current,area:area) == .ready else{continue}
-                    guard !self.working,!self.recoveryLocked,self.continuity.canResume(now:ProcessInfo.processInfo.systemUptime),self.huntArmed else{continue}
-                    let ready=current.rows.filter{$0.status=="ready" && (!$0.isAreaBoss || (self.areaBossEnabled && ($0.keyCount ?? 0)>0))}
+                    guard !self.selectionStopPending,!self.targetingEnabled,!self.working,!self.recoveryLocked,self.continuity.canResume(now:ProcessInfo.processInfo.systemUptime),self.huntArmed else{continue}
+                    let ready=current.rows.filter{self.allowsBoss($0,area:area) && $0.status=="ready" && (!$0.isAreaBoss || (self.areaBossEnabled && ($0.keyCount ?? 0)>0))}
                     let candidates=ready.filter{retry.eligible($0.id,now:ProcessInfo.processInfo.systemUptime)}
                     let target=candidates.first{$0.isAreaBoss} ?? candidates.first{$0.insId==10000+current.fieldId} ?? candidates.first
                     guard let target else{
                         self.currentTarget=nil;self.message=ready.isEmpty ? (current.areaBossKey?.count==0 ? "区域BOSS钥匙已用完 · 等待普通首领刷新" : "等待首领刷新…") : "保持巡检，等待暂缓目标重试…"
                         try await Task.sleep(nanoseconds:3_000_000_000);continue
                     }
-                    self.currentTarget=target.name;self.message="正在前往 \(target.name)"
+                    self.currentHuntBoss=target;self.currentTarget=target.name;self.message="正在前往 \(target.name)"
                     do {_=try await self.bridge.request("goto",fields:["areaId":area,"bossId":target.bossId,"insId":target.insId,"pointId":target.pointId])}
                     catch {if error.localizedDescription == "hunt_scene_unavailable" {continue};throw error}
                     self.log("前往 \(self.fieldName(target)) · \(target.name)")
@@ -526,6 +671,8 @@ import CoreGraphics
                         let started=ProcessInfo.processInfo.systemUptime
                         try await Task.sleep(nanoseconds:2_000_000_000);try Task.checkCancellation();try await self.readSnapshot()
                         guard self.isHunting(run),let value=self.snapshot else{break}
+                        if !self.allowsBoss(target,area:area) {self.selectionStopPending=true;await self.cancelUnselectedBoss();interrupted=true;break}
+                        if self.targetingEnabled {interrupted=true;break}
                         if target.isAreaBoss,value.areaBossKey?.count==0 {
                             self.log("区域BOSS钥匙已用完，取消当前区域BOSS目标，继续普通首领巡检")
                             _=try await self.bridge.request("assistRun",fields:["avoidNoKeyBoss":true,"huntArea":area,"locked":self.recoveryLocked])
@@ -554,7 +701,7 @@ import CoreGraphics
                         } else {remaining-=elapsed}
                     }
                     guard self.isHunting(run) else{break}
-                    if interrupted {self.currentTarget=nil;continue}
+                    if interrupted {self.currentTarget=nil;self.currentHuntBoss=nil;continue}
                     if !passed {
                         let delay=retry.deferTarget(target.id,now:ProcessInfo.processInfo.systemUptime)
                         self.log("\(target.name)暂未进入冷却，暂缓\(Int(delay))秒；继续巡检其他首领")
@@ -574,6 +721,7 @@ import CoreGraphics
     }
     func stopAttack()async {
         savedHuntArea=nil;UserDefaults.standard.removeObject(forKey:"continuousHuntArea")
+        selectionStopPending=false;currentHuntBoss=nil
         generation+=1;continuity.stop();huntPaused=false;huntArmed=false;huntTask?.cancel();huntTask=nil;currentTarget=nil
         if let activity=backgroundActivity {ProcessInfo.processInfo.endActivity(activity);backgroundActivity=nil}
         if connected {

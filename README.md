@@ -26,9 +26,11 @@
 | 功能 | 当前行为 |
 | --- | --- |
 | 首领检测 | 当前区域普通首领、区域 BOSS、刷新状态、倒计时与解锁信息；过期数据不冒充实时状态 |
+| 首领勾选与装备筛选 | 逐个勾选，按区域记忆；按所需装备部位多选筛选，显示游戏配置的等级与部位预览；仅攻略勾选且匹配的目标 |
 | 自动攻略 | 循环选择目标，游戏原生寻路和自动战斗；冲突、场景未就绪等情况保留任务等待 |
 | 副本与位置 | 区分野外、其他区域、副本和加载；回到原攻略区域后恢复，可点“立即继续”跳过等待 |
 | 区域 BOSS | 有真实钥匙且确认刷新时攻略；只为本次目标开启掉落宝箱，不购买钥匙或使用替代道具 |
+| 附近怪物 / 集火 | 浮窗显示游戏可选范围内的存活敌方怪物，百分比血条每半秒更新；按当前剩余血量排序，同名怪物独立显示；可手动点选，也可单独开启自动集火最高血量（默认关闭），手动选择会退出自动模式 |
 | 方向键 / WASD | 仅游戏前台读取；松键、切换窗口和输入文字时停止转发，不影响其他软件打字 |
 | ESC 返回 | 每按一次返回一层，支持背包、商店、活动等公共返回组件及普通关闭弹窗；不代替购买、领取或确认 |
 | 断线与异地登录 | 已适配的断线确认自动重试；60 秒内第二次异地登录暂停自动攻击和重连，需手动继续 |
@@ -43,9 +45,10 @@
 
 1. 从 Releases 下载 `BossAssistant-x.y.z-macos-arm64.zip`，解压并将“首领助手.app”放到 `/Applications`。
 2. 首次打开助手，点击“注入脚本”，按需选择游戏 appCache 目录。先备份原始缓存，再正常重启游戏一次；按当前热更新目录识别真实主脚本，未适配版本拒绝注入。
-3. 进入角色后，确认实际区域和最新首领列表，点击“开始自动攻略”。“停止攻击”是主动结束任务的入口。
+3. 进入角色后，确认实际区域和最新首领列表，选择所需装备部位并勾选目标，点击“开始自动攻略”。“停止攻击”是主动结束任务的入口。
 4. 设置 → 辅助功能，选择键盘、红包与区域 BOSS 选项；键盘权限未生效会明确提示。
-5. 设置 → 弹窗处理，选择处理类型；事件记录中查看红包和弹窗详细数据。
+5. 侧栏 → 附近怪物 / 集火，开启列表后手动选择；自动集火可独立开关。面板切回游戏仍显示，关闭窗口会停用本功能；开启期间保留并暂停首领巡检，关闭后允许恢复。
+6. 设置 → 弹窗处理，选择处理类型；事件记录中查看红包和弹窗详细数据。
 
 游戏缓存：`~/Library/Containers/com.yzlm.game/Data/Library/Caches/appCache`。
 
@@ -71,6 +74,7 @@ zsh BossAssistant/build.sh
 node BossAssistant/Tests/keyboard-runtime.cjs
 node BossAssistant/Tests/assistance-runtime.cjs
 node BossAssistant/Tests/location-runtime.cjs
+node BossAssistant/Tests/targeting-runtime.cjs
 swiftc BossAssistant/Sources/GameCachePolicy.swift BossAssistant/Tests/GameCachePolicyTests.swift -o /tmp/game-cache-tests
 /tmp/game-cache-tests BossAssistant/Resources
 zsh scripts/test-update.sh

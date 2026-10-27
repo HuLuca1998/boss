@@ -14,6 +14,9 @@ jobs:
           node BossAssistant/Tests/keyboard-runtime.cjs
           node BossAssistant/Tests/assistance-runtime.cjs
           node BossAssistant/Tests/location-runtime.cjs
+          node BossAssistant/Tests/targeting-runtime.cjs
+          swiftc BossAssistant/Sources/BossSelection.swift BossAssistant/Tests/BossSelectionTests.swift -o /tmp/boss-selection-tests
+          /tmp/boss-selection-tests BossAssistant/Resources
           zsh scripts/test-update.sh
           swiftc BossAssistant/Sources/GameCachePolicy.swift BossAssistant/Tests/GameCachePolicyTests.swift -o /tmp/game-cache-tests
           /tmp/game-cache-tests BossAssistant/Resources

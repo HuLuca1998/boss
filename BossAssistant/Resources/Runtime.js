@@ -85,6 +85,12 @@
       ready:ready,
       gameTime:world && world.GetGameTime ? world.GetGameTime() : null,dungeonId:dungeonId,heroPos:pos ? {x:pos.x,y:pos.y,z:pos.z} : null};
   }
+  function teamFollowing(){
+    return typeof WildModel!=='undefined' && typeof WildModel.inst.CheckIsWildSync==='function' && WildModel.inst.CheckIsWildSync() && !WildModel.inst.IsWildSyncLeader();
+  }
+  function changeOwnedAuto(enabled){
+    if(!teamFollowing())WildModel.inst.ChangeAutoSkill(enabled);
+  }
   function currentWildData(){
     var type=SceneMgr.inst.GetCurSceneType();
     if(type!==Scene.SceneType.Wild && type!==Scene.SceneType.WildSync)return null;
@@ -109,11 +115,11 @@
       route.mode='pausedBountyPath';route.pathData=data;route.ownsPath=true;
       data.SetClientHeroPathInfo(path.map(function(p){return new QVector3(p.x*100,0,p.z*100);}),true);
       route.phase='moving';route.target={x:params.pos.x,y:params.pos.y,z:params.pos.z};
-      WildModel.inst.ChangeAutoSkill(true);
+      changeOwnedAuto(true);
     }else{
       var accepted=typeof OutEventSingleRouteModel!=='undefined' && OutEventSingleRouteModel.inst.IsInSingleOutEventRouting();
       route.phase=accepted ? 'moving' : 'blocked';
-      if(accepted)WildModel.inst.ChangeAutoSkill(true);
+      if(accepted)changeOwnedAuto(true);
       if(!accepted)route.error='游戏未接受自动寻路';
     }
   }
@@ -123,7 +129,7 @@
     var pos=data.GetHeroPos(),target=navigation.target;
     if(pos && target){
       var dx=pos.x-target.x,dz=pos.z-target.z;navigation.distance=Math.sqrt(dx*dx+dz*dz);
-      if(navigation.distance<=8){clearOwnedPath();navigation.phase='attacking';WildModel.inst.ChangeAutoSkill(true);}
+      if(navigation.distance<=8){clearOwnedPath();navigation.phase='attacking';changeOwnedAuto(true);}
     }
   }
   function suspendHunt() {
@@ -133,6 +139,7 @@
   }
   function requireHuntScene(areaId) {
     if(assist.locked)throw Error('account_recovery_locked');
+    if(teamFollowing())throw Error('team_following');
     var location=locationSnapshot();
     if(location.kind!=='wild' || !location.ready || CombatTPMgr.inst.GetIsTPing() || (areaId && areaId!==WildIdleModel.inst.GetCurAreaId()))throw Error('hunt_scene_unavailable');
   }
@@ -489,7 +496,7 @@
     try{requireHuntScene(m.huntArea);}catch(e){return;}
     if(navigation && navigation.phase==='leavingNoKey')return;
     // Leave only the regional-boss combat zone. Normal-boss patrol intent is retained.
-    suspendHunt();WildModel.inst.ChangeAutoSkill(false);noKeyExitAt=Date.now();
+    suspendHunt();changeOwnedAuto(false);noKeyExitAt=Date.now();
     if(!MapModel.inst.CheckIsCanTransfer())return;
     var rows=MapModel.inst.GetMonsterItemDataListByAreaId(m.huntArea,false,false,true),destination=null;
     for(var i=0;i<rows.length;i++){
@@ -509,7 +516,8 @@
     assist.redPacketsEnabled=m.redPackets===true;assist.fastEnabled=assist.redPacketsEnabled && m.fastRedPackets===true;
     assist.locked=m.locked===true;
     if(assist.locked){
-      try{suspendHunt();var loc=locationSnapshot();if(loc.kind==='wild')WildModel.inst.ChangeAutoSkill(false);}catch(e){}
+      // Protection owns only assistant navigation/auto mode, never the team's combat state.
+      if(navigation || priorAuto!==null){try{var loc=locationSnapshot();suspendHunt();if(loc.kind==='wild')changeOwnedAuto(false);}catch(e){}}
       return assistStatus();
     }
     var d=assistDialog();
@@ -529,7 +537,81 @@
     return assistStatus();
   }
 
+  // Nearby monster selection uses the same distance gate and handler as a normal click.
+  var targeting={enabled:false,autoHighest:false,world:null,scope:0,owned:null,lastSwitch:0,locked:false};
+  function targetContext(){
+    var scene=SceneMgr.inst.GetCurSceneType(),battle=CombatMgr.inst.GetBattleBySceneType(scene);
+    var data=battle && battle.battleData,world=data && data.world;
+    if(world!==targeting.world){targeting.world=world;targeting.scope++;targeting.owned=null;targeting.lastSwitch=0;}
+    if(!targeting.enabled || !world || !battle._fighting || CombatMgr.inst.GetCurRenderSceneType()!==scene || !data.CheckCurHeroCreated() || CombatTPMgr.inst.GetIsTPing())return null;
+    var monitor=world.GetGlobalComp(CompEnum.GMonitor),eid=monitor && monitor.GetHeroEid(world.localAgentId),hero=eid && world.GetEntity(eid);
+    if(!hero || UtilsInterface.EntityUtils.CheckEntityHasDieTypeTag(hero))return null;
+    var transform=hero.Get(RCompEnum.RTransform),controller=world.GetGlobalComp(RCompEnum.GController);
+    var radius=ConfigMgr.inst.GetBattleParam('lock_distance')/100;
+    if(!transform || !controller || !Number.isFinite(radius) || radius<=0)return null;
+    return {scene:scene,world:world,hero:hero,pos:transform.pos,controller:controller,radius:radius};
+  }
+  function targetRows(ctx){
+    var entities=ctx.world.dataCenter && ctx.world.dataCenter.entities,rows=[];
+    if(!entities)return rows;
+    var ai=Utils.GetPlayerControlHeroAIComp(ctx.hero),selected=ai && ai.playerSelectedTargetEid;
+    Object.keys(entities).forEach(function(k){
+      var entity=entities[k];
+      if(!entity || [3,6].indexOf(entity.type)<0 || ctx.world.GetEntity(entity.eid)!==entity || UtilsInterface.EntityUtils.CheckEntityHasDieTypeTag(entity))return;
+      if(Utils.GetRelationshipWithoutCombat(ctx.hero,entity)!==CType.Relationship.Enemy)return;
+      var transform=entity.Get(RCompEnum.RTransform),attr=entity.Get(CompEnum.Attr);
+      if(!transform || !attr)return;
+      var distance=Utils.CalcDistance(ctx.pos,transform.pos),hp=attr.GetNowHp(true),maxHp=attr.GetMaxHp();
+      if(!Number.isFinite(distance) || distance>ctx.radius || !Number.isFinite(hp) || !Number.isFinite(maxHp) || hp<=0 || maxHp<=0)return;
+      var cfg=ConfigMgr.inst.GetKey(configTable.monster_type,entity.cfgId,false);
+      rows.push({eid:String(entity.eid),name:cfg ? L(cfg.name) : '怪物',cfgId:entity.cfgId,hp:hp,maxHp:maxHp,distance:distance,
+        selected:String(selected)===String(entity.eid),requested:String(ctx.controller.curHeroSelectTargetEid)===String(entity.eid)});
+    });
+    rows.sort(function(a,b){return b.hp-a.hp || a.distance-b.distance || a.eid.localeCompare(b.eid);});
+    return rows;
+  }
+  function targetRelease(){
+    var world=targeting.world,controller=world && world.GetGlobalComp(RCompEnum.GController);
+    if(controller && targeting.owned!==null && String(controller.curHeroSelectTargetEid)===String(targeting.owned))ClientStateSyncUtils.ResetLocalHeroAISelectTargetEid(world);
+    targeting.owned=null;
+  }
+  function targetChoose(ctx,eid){
+    if(assist.locked || targeting.locked)throw Error('账号保护已暂停集火操作');
+    var row=targetRows(ctx).find(function(r){return r.eid===String(eid);});
+    if(!row)throw Error('目标已死亡、离开范围或无法选中');
+    var entity=ctx.world.GetEntity(Number(row.eid));
+    if(!entity || String(entity.eid)!==row.eid)throw Error('目标已经变化');
+    EntityClickHelper.OnClickMonster(ctx.hero,entity);
+    if(String(ctx.controller.curHeroSelectTargetEid)!==row.eid)throw Error('游戏未接受目标选择');
+    targeting.owned=row.eid;targeting.lastSwitch=Date.now();return row;
+  }
+  function targetStatus(tick){
+    var ctx=targetContext(),rows=ctx ? targetRows(ctx) : [];
+    if(tick && ctx && targeting.autoHighest && !assist.locked && !targeting.locked && rows.length){
+      var top=rows[0],current=rows.find(function(r){return r.requested;});
+      if(current && current.hp===top.hp)top=current;
+      if(!top.requested && Date.now()-targeting.lastSwitch>=800){targetChoose(ctx,top.eid);rows=targetRows(ctx);}
+    }
+    return {version:1,enabled:targeting.enabled,autoHighest:targeting.autoHighest,scope:String(targeting.scope),sceneType:ctx ? ctx.scene : null,
+      ready:!!ctx,locked:assist.locked || targeting.locked,radius:ctx ? ctx.radius : null,rows:rows};
+  }
+  function targetDispatch(m){
+    if(m.op==='targetMode'){
+      targeting.locked=m.locked===true;
+      if(m.enabled!==true){targetRelease();targeting.enabled=false;targeting.autoHighest=false;return targetStatus(false);}
+      targeting.enabled=true;targeting.autoHighest=m.autoHighest===true;
+      return targetStatus(true);
+    }
+    if(m.op==='targetTick'){targeting.locked=m.locked===true;return targetStatus(true);}
+    if(m.op==='targetSelect'){
+      var ctx=targetContext();
+      if(!ctx || String(m.scope)!==String(targeting.scope))throw Error('场景已变化，请等待列表刷新');
+      targetChoose(ctx,m.eid);targeting.autoHighest=false;return targetStatus(false);
+    }
+  }
+
   function dispatch(m) {
+    if(['targetMode','targetTick','targetSelect'].indexOf(m.op)>=0)return targetDispatch(m);
     if(m.op==='assistStatus')return assistStatus();
     if(m.op==='assistRun')return assistRun(m);
     if(m.op==='keyboardMode') {
@@ -556,7 +638,7 @@
       var bd=CombatMgr.inst.GetHightestPriorityBattle();
       if(!bd) throw Error('game_not_ready');
       priorAuto=bd.battleData.IsHeroAutoUseSkill();
-      WildModel.inst.ChangeAutoSkill(true);
+      changeOwnedAuto(true);
       return {previousAuto:priorAuto};
     }
     if (m.op === 'refresh') {
@@ -595,7 +677,7 @@
     if (m.op === 'stop') {
       targetedAreaBosses={};
       var inWild=locationSnapshot().kind==='wild';
-      suspendHunt();if(inWild)WildModel.inst.ChangeAutoSkill(false);
+      suspendHunt();if(inWild)changeOwnedAuto(false);
       return {stopped:true};
     }
     throw Error('unsupported_operation');
@@ -611,9 +693,10 @@
         catch(err){if(socket.readyState===1)socket.send(JSON.stringify({id:m&&m.id,error:String(err&&err.message||err)}));}
       };
       socket.onclose=function(){
+        try{targetRelease();}catch(e){}targeting.enabled=false;targeting.autoHighest=false;
         assist.redPacketsEnabled=false;assist.fastEnabled=false;
         keyboard.enabled=false;clearArrowKeys();
-        if(priorAuto!==null){try{var inWild=locationSnapshot().kind==='wild';suspendHunt();if(inWild)WildModel.inst.ChangeAutoSkill(false);}catch(e){}priorAuto=null;}
+        if(priorAuto!==null){try{var inWild=locationSnapshot().kind==='wild';suspendHunt();if(inWild)changeOwnedAuto(false);}catch(e){}priorAuto=null;}
         if(!stopped)setTimeout(connect,3000);
       };
       socket.onerror=function(){};
