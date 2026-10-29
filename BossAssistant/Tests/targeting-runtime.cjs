@@ -4,7 +4,7 @@ const controller={curHeroSelectTargetEid:null},ai={playerSelectedTargetEid:null}
 const entries={};
 const hero={eid:1,type:2,Get:k=>k==='rt'?{pos:{x:0,y:0,z:0}}:null,dead:false};entries[1]=hero;
 function monster(eid,hp,x=3,options={}){
- const m={eid,type:options.type??3,cfgId:700,dead:false,enemy:true,hp,maxHp:200,...options};
+ const m={eid,type:options.type??3,cfgId:eid,dead:false,enemy:true,hp,maxHp:200,...options};
  m.Get=k=>k==='rt'?{pos:{x,y:0,z:0}}:k==='attr'?{GetNowHp:()=>m.hp,GetMaxHp:()=>m.maxHp}:null;entries[eid]=m;return m;
 }
 const a=monster(10,100),b=monster(11,150),dead=monster(12,999,2,{dead:true}),far=monster(13,999,20),friend=monster(14,999,3,{enemy:false});
@@ -14,7 +14,7 @@ let world=makeWorld();
 const ctx={WebSocket:class {constructor(){socket=this;this.readyState=1;}send(v){this.last=JSON.parse(v);}},setTimeout(f,ms){if(ms===1000)f();},Date:{now:()=>clock},
  SceneMgr:{inst:{GetCurSceneType:()=>scene}},CombatMgr:{inst:{GetBattleBySceneType:()=>({_fighting:ready,battleData:{world,CheckCurHeroCreated:()=>ready}}),GetCurRenderSceneType:()=>render}},CombatTPMgr:{inst:{GetIsTPing:()=>teleport}},
  CompEnum:{GMonitor:'monitor',Attr:'attr'},RCompEnum:{RTransform:'rt',GController:'controller'},
- ConfigMgr:{inst:{GetBattleParam:()=>1000,GetKey:()=>({name:'重叠怪物'})}},configTable:{monster_type:1},L:s=>s,CType:{Relationship:{Enemy:2}},
+ ConfigMgr:{inst:{GetBattleParam:()=>1000,GetKey:(_,id)=>({name:entries[id]?.name || '重叠怪物'})}},configTable:{monster_type:1},L:s=>s,CType:{Relationship:{Enemy:2}},
  Utils:{CalcDistance:(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),GetRelationshipWithoutCombat:(h,e)=>e.enemy?2:1,GetPlayerControlHeroAIComp:()=>ai},UtilsInterface:{EntityUtils:{CheckEntityHasDieTypeTag:e=>e.dead}},
  EntityClickHelper:{OnClickMonster(h,e){calls.push(e.eid);controller.curHeroSelectTargetEid=e.eid;}},
  ClientStateSyncUtils:{ResetLocalHeroAISelectTargetEid(){controller.curHeroSelectTargetEid=null;}}
@@ -41,5 +41,19 @@ hero.dead=true;assert.equal(req('targetTick').result.ready,false);hero.dead=fals
 ready=false;assert.equal(req('targetTick').result.ready,false);ready=true;
 clock+=1000;req('targetSelect',{scope,eid:'10'});controller.curHeroSelectTargetEid=11;req('targetMode',{enabled:false});assert.equal(controller.curHeroSelectTargetEid,11,'Disabling preserves a later normal game click');
 req('targetMode',{enabled:true});req('targetSelect',{scope,eid:'10'});req('targetMode',{enabled:false});assert.equal(controller.curHeroSelectTargetEid,null,'Disabling clears only owned target');
+// Totems remain visible and manually selectable, but never participate in automatic ranking or ties.
+a.dead=false;b.dead=false;a.hp=100;b.hp=150;
+const totems=[monster(20,999,3,{name:'图腾守卫'}),monster(21,999,3,{name:'火焰图腾守卫'}),monster(22,999,3,{name:'治疗图腾'})];
+clock+=1000;state=req('targetMode',{enabled:true,autoHighest:true}).result;
+assert.equal(calls.at(-1),11,'Highest HP totems are skipped');assert.equal(state.rows.length,5,'Totems remain visible');
+req('targetSelect',{scope,eid:'20'});assert.equal(calls.at(-1),20,'Manual totem selection still works');
+totems[0].hp=150;clock+=1000;req('targetMode',{enabled:true,autoHighest:true});assert.equal(calls.at(-1),11,'Equal HP must not retain a totem');
+a.dead=true;b.dead=true;req('targetSelect',{scope,eid:'21'});const onlyTotems=calls.length;
+state=req('targetMode',{enabled:true,autoHighest:true}).result;
+assert.equal(calls.length,onlyTotems,'No automatic click when only totems remain');assert.equal(controller.curHeroSelectTargetEid,null,'Release owned totem when enabling automatic mode');assert.equal(state.rows.some(r=>r.requested),false);
+clock+=1000;req('targetTick');assert.equal(calls.length,onlyTotems,'Only-totem ticks do not select');
+b.dead=false;clock+=1000;req('targetTick');assert.equal(calls.at(-1),11,'Automatically resumes when a normal monster appears');
+b.name='变形图腾';req('targetTick');assert.equal(controller.curHeroSelectTargetEid,null,'An owned target renamed to a totem is released immediately');
+b.name='普通怪物';clock+=1000;req('targetTick');assert.equal(calls.at(-1),11);
 req('targetMode',{enabled:true,autoHighest:true});socket.onclose();assert.equal(req('targetTick').result.enabled,false);assert.equal(req('targetTick').result.autoHighest,false);
-console.log('PASS: nearby living enemy monsters only, duplicate names use EIDs, native radius, live HP sort, original click, actual vs requested, highest HP toggle, stable ties, manual override, dead/stale/loading/teleport/account gates, owned cleanup and disconnect');
+console.log('PASS: nearby living enemy monsters only, duplicate names use EIDs, native radius, live HP sort, original click, actual vs requested, highest HP toggle, stable ties, totem exclusion/only-totem wait/manual totem selection, manual override, dead/stale/loading/teleport/account gates, owned cleanup and disconnect');

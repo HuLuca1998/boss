@@ -234,5 +234,12 @@
       "preservation": "Game PID12418 unchanged through official package replacement; native UI reconnected and displayed17 Redleaf bosses, keyboard active,16/17 selections. Existing Input Monitoring authorized before replacement. Hunt remains stopped.",
       "ci": "Main and tag GitHub checks queued at deployment verification; not reported as passed."
     }
+  },
+  "totem_exclusion_1_4_3": {
+    "date": "2026-10-29",
+    "build": 30,
+    "change": "Automatic highest-current-HP selection excludes localized monster names containing 图腾 at any position. Nearby list and manual selection retain totems; all-totem scenes wait. Owned excluded targets are released while automatic selection is enabled.",
+    "regression": "targeting-runtime passes higher-HP totems, prefix/infix/suffix matches, equal-HP current totem, all-totem wait, owned-target release, normal-target reappearance, renamed-target exclusion and manual totem selection; existing targeting cases remain passing.",
+    "limits": "Natural live totem encounter not yet observed; no claim of live exclusion validation."
   }
 }

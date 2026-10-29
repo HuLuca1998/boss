@@ -55,7 +55,7 @@ struct NearbyTargetView:View {
             HStack {
                 Toggle("开启列表",isOn:Binding(get:{model.targetingEnabled},set:{value in Task{await model.setTargetEnabled(value)}})).disabled(model.targetBusy)
                 Spacer()
-                Toggle("自动集火最高血量",isOn:Binding(get:{model.targetAutoHighest},set:{value in Task{await model.setTargetAuto(value)}})).disabled(!model.targetingEnabled || !model.connected || model.targetBusy || (model.recoveryLocked && !model.targetAutoHighest)).help("默认关闭；按当前剩余血量选择。手动点选会退出自动模式。")
+                Toggle("自动集火最高血量",isOn:Binding(get:{model.targetAutoHighest},set:{value in Task{await model.setTargetAuto(value)}})).disabled(!model.targetingEnabled || !model.connected || model.targetBusy || (model.recoveryLocked && !model.targetAutoHighest)).help("默认关闭；按当前剩余血量选择，跳过名字包含“图腾”的怪物。手动点选会退出自动模式。")
             }
             HStack {Text("血量从高到低 · 点击手动集火").font(.caption).foregroundStyle(.secondary);Spacer();Text("\(model.nearbyTargets?.rows.count ?? 0) 个").font(.caption).foregroundStyle(.secondary)}
             Text(model.targetMessage).font(.caption).foregroundStyle(model.recoveryLocked ? Color.orange : .secondary).lineLimit(1).help(model.targetMessage)

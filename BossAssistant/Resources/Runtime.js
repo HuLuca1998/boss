@@ -587,10 +587,14 @@
   }
   function targetStatus(tick){
     var ctx=targetContext(),rows=ctx ? targetRows(ctx) : [];
-    if(tick && ctx && targeting.autoHighest && !assist.locked && !targeting.locked && rows.length){
-      var top=rows[0],current=rows.find(function(r){return r.requested;});
-      if(current && current.hp===top.hp)top=current;
-      if(!top.requested && Date.now()-targeting.lastSwitch>=800){targetChoose(ctx,top.eid);rows=targetRows(ctx);}
+    if(tick && ctx && targeting.autoHighest && !assist.locked && !targeting.locked){
+      var candidates=rows.filter(function(r){return r.name.indexOf('图腾')<0;});
+      var excluded=rows.find(function(r){return r.requested && r.name.indexOf('图腾')>=0;});
+      if(excluded && excluded.eid===targeting.owned)targetRelease();
+      var top=candidates[0],current=candidates.find(function(r){return r.requested;});
+      if(top && current && current.hp===top.hp)top=current;
+      if(top && !top.requested && Date.now()-targeting.lastSwitch>=800)targetChoose(ctx,top.eid);
+      rows=targetRows(ctx);
     }
     return {version:1,enabled:targeting.enabled,autoHighest:targeting.autoHighest,scope:String(targeting.scope),sceneType:ctx ? ctx.scene : null,
       ready:!!ctx,locked:assist.locked || targeting.locked,radius:ctx ? ctx.radius : null,rows:rows};
