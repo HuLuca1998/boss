@@ -209,5 +209,22 @@
     "regression": "Old runtime fails100 idle locked polls with100 ChangeAutoSkill attempts; patched runtime passes with0. Four runtime suites pass; native build/signature pass.",
     "fix": "Persistent native account lock polls read-only status rather than repeated assistRun (first newly observed lock still delivered to shut down existing automation). Runtime lock clears only owned hunt, auto changes bypass following members, hunt entry refuses team_following before mutation.",
     "deployment": "Native build27 installed. Old injected runtime remains until next explicit reinjection; native workaround active without game restart. Live following scene after fix not yet reverified."
+  },
+  "home_recovery_entry": {
+    "date": "2026-10-27",
+    "build": 28,
+    "change": "Home assistance row shows orange unlock button only while recoveryLocked; calls existing unlockRecovery without starting hunt. Protection text explicitly includes paused red packets.",
+    "validation": "Native build and installed signature pass. Current user protection already unlocked; locked-state appearance and click were not exercised against real account. No artificial protection lock was introduced."
+  },
+  "hot_update_1_4_2": {
+    "date": "2026-10-29",
+    "build": 29,
+    "script": "Main-dda2f.js",
+    "object_id": "7868a8a23d060f90b2012cfd0b9df2bcb5b7b5c3",
+    "original_sha256": "033163e0aeb056f69d8c4df20a59ab181f31ff2057147fe8f58f0e139415fb53",
+    "compatibility": "Acorn parsed old/current full main scripts; 38 directly referenced class/object definitions byte-identical. Nine remaining enum/event/global references have identical occurrence counts and surrounding source windows; not treated as extracted class proof.",
+    "tests": "Four Runtime suites, three cache profiles with live read-only DCC resolution, original hashes and unknown/tamper/path guards pass; native fixed-signature build passes; update policy and temporary signed installer reject wrong version/signature/tampering and verify rollback/replacement.",
+    "live": "Injected and reconnected at22:16:54+08:00;17 Redleaf bosses, scene coordinates and0/3 keys read. Hunt started22:17:19; golden ogre cooldown verified22:17:28, spider lord cooldown verified22:17:35; lava giant cooldown verified22:17:43; stop UI confirms follow cancellation and auto combat disabled. Keyboard UI active.",
+    "limits": "This Apple Silicon Mac only. Nearby targeting, physical movement/ESC, regional key spending, natural redpacket results and all popup branches not independently reverified this run. Game App remains1.16.3."
   }
 }

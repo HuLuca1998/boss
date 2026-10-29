@@ -332,7 +332,7 @@ import CoreGraphics
             assistClaimed[updated.session]=updated.claimed
             if assistClaimed.count>10 {assistClaimed=[updated.session:updated.claimed]}
             if recoveryLocked {
-                assistMessage="异地登录频繁 · 自动重连与攻击已暂停，请手动继续"
+                assistMessage="账号保护中 · 自动重连、红包领取与攻击已暂停"
                 await pauseHunt(.account,text:assistMessage)
             } else {
                 assistMessage="\(autoReconnect ? "自动重连已开启" : "自动重连已关闭") · \(redPacketEnabled ? "世界/联盟红包监控中 · 待核验 \(updated.queued) 个" : "红包监控已关闭")"
@@ -360,7 +360,7 @@ import CoreGraphics
         return keyboardActive ? "方向键 / WASD / ESC 已开启" : "键盘控制等待游戏就绪"
     }
     var assistanceDescription:String {
-        connected ? assistMessage : (recoveryLocked ? "异地登录保护保持 · 游戏未连接，辅助功能等待连接" : "游戏未连接 · 自动重连、红包与弹窗处理等待连接")
+        connected ? assistMessage : (recoveryLocked ? "账号保护中 · 自动重连、红包领取与攻击已暂停 · 等待游戏连接" : "游戏未连接 · 自动重连、红包与弹窗处理等待连接")
     }
     var hasFreshSnapshot:Bool {connected && lastDetected.map{Date().timeIntervalSince($0)<10} == true}
     var unfilteredRows:[Boss] {

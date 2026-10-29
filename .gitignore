@@ -25,3 +25,7 @@ Connection.json
 .env.*
 __pycache__/
 *.pyc
+
+# Local research exports and generated reports
+exports/
+outputs/

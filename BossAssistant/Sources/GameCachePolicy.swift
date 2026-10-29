@@ -13,7 +13,8 @@ struct GameCacheProfile:Equatable {
     let originalHash:String
     static let supported:[GameCacheProfile]=[
         .init(script:"Main-40920.js",objectID:"9bca89d68d4700faff8d14ff2748cb746b6e4848",resource:"OriginalCache",originalHash:"4085b2c2f223e255fe5b8fa62379d02d2843671ce6def362694304a099af37a0"),
-        .init(script:"Main-f648a.js",objectID:"c9a04c498816087c265e2a67f04d906464400d2b",resource:"OriginalCache-f648a",originalHash:"ebd90420ce4a88b52e3610e63b77924be99ffda0c027e7b322ecb6941d8015a2")
+        .init(script:"Main-f648a.js",objectID:"c9a04c498816087c265e2a67f04d906464400d2b",resource:"OriginalCache-f648a",originalHash:"ebd90420ce4a88b52e3610e63b77924be99ffda0c027e7b322ecb6941d8015a2"),
+        .init(script:"Main-dda2f.js",objectID:"7868a8a23d060f90b2012cfd0b9df2bcb5b7b5c3",resource:"OriginalCache-dda2f",originalHash:"033163e0aeb056f69d8c4df20a59ab181f31ff2057147fe8f58f0e139415fb53")
     ]
 }
 

@@ -50,7 +50,15 @@ struct MainView:View {
                     }.tableStyle(.inset(alternatesRowBackgrounds:true)).frame(minHeight:210)
                 }.background(Color.white.opacity(0.03),in:RoundedRectangle(cornerRadius:14)).clipShape(RoundedRectangle(cornerRadius:14)).overlay(RoundedRectangle(cornerRadius:14).stroke(Color.white.opacity(0.06)))
                 HStack{Label(model.keyboardDescription,systemImage:"keyboard").font(.caption).foregroundStyle(.secondary);Spacer();Button("辅助功能与弹窗设置"){showSettings=true}}
-                Text(model.assistanceDescription).font(.caption).foregroundStyle(model.recoveryLocked ? Color.orange : .secondary).fixedSize(horizontal:false,vertical:true)
+                HStack(spacing:12){
+                    Text(model.assistanceDescription).font(.caption).foregroundStyle(model.recoveryLocked ? Color.orange : .secondary).fixedSize(horizontal:false,vertical:true)
+                    Spacer()
+                    if model.recoveryLocked {
+                        Button("解除保护，恢复辅助"){model.unlockRecovery()}
+                            .buttonStyle(.borderedProminent).tint(.orange).foregroundStyle(.black)
+                            .help("解除助手账号保护，恢复已开启的重连与红包功能；不会启动自动攻略。")
+                    }
+                }
                 if !model.connected {Text(model.cacheMessage).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)}
                 HStack(spacing:12){
                     Image(systemName:model.huntPaused ? "pause.circle" : model.running ? "waveform.path" : "checkmark.shield").foregroundStyle(teal)

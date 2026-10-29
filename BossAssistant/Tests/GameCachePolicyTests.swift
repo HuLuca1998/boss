@@ -63,6 +63,6 @@ import Foundation
             let current=try GameCachePolicy.resolve(base:URL(fileURLWithPath:CommandLine.arguments[2]))
             print("Read-only live resolution: \(current.profile.script), root \(current.root)")
         }
-        print("PASS: both supported hot updates, exact current tree selection, original hashes, patched identity, version mismatch, ambiguity, malformed trees, traversal and symlink rejection")
+        print("PASS: all \(GameCacheProfile.supported.count) supported hot updates, exact current tree selection, original hashes, patched identity, version mismatch, ambiguity, malformed trees, traversal and symlink rejection")
     }
 }
