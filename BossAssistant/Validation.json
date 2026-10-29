@@ -225,6 +225,14 @@
     "compatibility": "Acorn parsed old/current full main scripts; 38 directly referenced class/object definitions byte-identical. Nine remaining enum/event/global references have identical occurrence counts and surrounding source windows; not treated as extracted class proof.",
     "tests": "Four Runtime suites, three cache profiles with live read-only DCC resolution, original hashes and unknown/tamper/path guards pass; native fixed-signature build passes; update policy and temporary signed installer reject wrong version/signature/tampering and verify rollback/replacement.",
     "live": "Injected and reconnected at22:16:54+08:00;17 Redleaf bosses, scene coordinates and0/3 keys read. Hunt started22:17:19; golden ogre cooldown verified22:17:28, spider lord cooldown verified22:17:35; lava giant cooldown verified22:17:43; stop UI confirms follow cancellation and auto combat disabled. Keyboard UI active.",
-    "limits": "This Apple Silicon Mac only. Nearby targeting, physical movement/ESC, regional key spending, natural redpacket results and all popup branches not independently reverified this run. Game App remains1.16.3."
+    "limits": "This Apple Silicon Mac only. Nearby targeting, physical movement/ESC, regional key spending, natural redpacket results and all popup branches not independently reverified this run. Game App remains1.16.3.",
+    "release_deployment": {
+      "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.4.2",
+      "commit": "fe7d72fd2500fb8373b7b56d94131dd5ca1161f6",
+      "archive_sha256": "47dd09d61698df1006884fbfe247025d7e35cb896847f3e443176686c3e931cc",
+      "pipeline": "Official stable release uploaded and published first. Downloaded ZIP and checksum from GitHub, verified SHA256, archive policy, exact version and fixed certificate. Production installer waited for normal exit, replaced installed App and automatically reopened. UpdateResult success; installed1.4.2/build29. Executable/runtime/new original resource match signed release build.",
+      "preservation": "Game PID12418 unchanged through official package replacement; native UI reconnected and displayed17 Redleaf bosses, keyboard active,16/17 selections. Existing Input Monitoring authorized before replacement. Hunt remains stopped.",
+      "ci": "Main and tag GitHub checks queued at deployment verification; not reported as passed."
+    }
   }
 }
