@@ -240,6 +240,14 @@
     "build": 30,
     "change": "Automatic highest-current-HP selection excludes localized monster names containing 图腾 at any position. Nearby list and manual selection retain totems; all-totem scenes wait. Owned excluded targets are released while automatic selection is enabled.",
     "regression": "targeting-runtime passes higher-HP totems, prefix/infix/suffix matches, equal-HP current totem, all-totem wait, owned-target release, normal-target reappearance, renamed-target exclusion and manual totem selection; existing targeting cases remain passing.",
-    "limits": "Natural live totem encounter not yet observed; no claim of live exclusion validation."
+    "limits": "Only this Mac tested; all-totem waiting and target rename behavior covered by regression tests rather than natural live observation.",
+    "release_deployment": {
+      "url": "https://github.com/HuLuca1998/boss/releases/tag/v1.4.3",
+      "commit": "e43daab5350fbd801aef30d1fab689c604538128",
+      "sha256": "c94e9b8e9766a2c1e6350665196ef3354b1bc22cd9ea5a7fdf4a4fb3c59a59fd",
+      "install": "Published first, downloaded actual GitHub stable package; checksum/archive/version/fixed certificate verified. In-app checks still showed1.4.2 immediately after release, so production installer was invoked with downloaded package. UpdateResult success1.4.3/build30. Reinjected via native UI; installed and injected runtime match released source.",
+      "tests": "All four Runtime suites, three-profile cache policy, boss selection and update policy tests pass. Signed native release verified. Main/tag GitHub CI40896868485/40896868801 both success.",
+      "live": "Native nearby panel autoHighest on: healing totems786461/786460 at92.7%/83.3% remained visible; selected normal orc shaman786439 at49.2%, another shaman786440 at47.5%. Confirms automatic mode skips actual healing totems. Automatic mode was enabled by user activity during validation and left as observed."
+    }
   }
 }
