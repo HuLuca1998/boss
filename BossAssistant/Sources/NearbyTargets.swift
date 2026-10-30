@@ -6,11 +6,15 @@ struct NearbyMonster:Codable,Identifiable {
     let eid:String;let name:String;let cfgId:Int;let hp:Double;let maxHp:Double;let distance:Double
     let selected:Bool;let requested:Bool
     var id:String {eid}
-    var fraction:Double {max(0,min(1,hp/maxHp))}
+    var fraction:Double {maxHp > 0 ? max(0,min(1,hp/maxHp)) : 0}
     var healthText:String {"\(hp.formatted(.number.precision(.fractionLength(0)))) / \(maxHp.formatted(.number.precision(.fractionLength(0))))"}
 }
 struct NearbyTargetStatus:Codable {
     let version:Int;let enabled:Bool;let autoHighest:Bool;let scope:String;let sceneType:Int?;let ready:Bool;let locked:Bool;let radius:Double?;let rows:[NearbyMonster]
+    var totalMaxHp:Double {rows.reduce(0){$0 + max(0,$1.maxHp)}}
+    var totalHp:Double {rows.reduce(0){$0 + max(0,min($1.hp,$1.maxHp))}}
+    var totalFraction:Double {totalMaxHp > 0 ? totalHp/totalMaxHp : 0}
+    var totalHealthText:String {"\(totalHp.formatted(.number.precision(.fractionLength(0)))) / \(totalMaxHp.formatted(.number.precision(.fractionLength(0))))"}
 }
 
 @MainActor final class NearbyTargetPanel:NSWindowController,NSWindowDelegate {
@@ -30,10 +34,10 @@ struct NearbyTargetStatus:Codable {
         guard let shared,let window=shared.window,window.isVisible,count != shared.lastCount else{return}
         shared.lastCount=count
         let screen=window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? NSRect(x:0,y:0,width:1200,height:800)
-        let capacity=max(1,Int((screen.height-200)/29))
+        let capacity=max(1,Int((screen.height-250)/29))
         let columns=max(1,Int(ceil(Double(count)/Double(capacity))))
         let width=min(screen.width-30,max(430,Double(columns)*350))
-        let height=min(screen.height-60,max(220,Double(Int(ceil(Double(max(1,count))/Double(columns))))*29+135))
+        let height=min(screen.height-60,max(220,Double(Int(ceil(Double(max(1,count))/Double(columns))))*29+185))
         var frame=window.frame
         frame.origin.y += frame.height-height;frame.size=NSSize(width:width,height:height)
         frame.origin.x=max(screen.minX,min(frame.origin.x,screen.maxX-width))
@@ -59,6 +63,19 @@ struct NearbyTargetView:View {
             }
             HStack {Text("血量从高到低 · 点击手动集火").font(.caption).foregroundStyle(.secondary);Spacer();Text("\(model.nearbyTargets?.rows.count ?? 0) 个").font(.caption).foregroundStyle(.secondary)}
             Text(model.targetMessage).font(.caption).foregroundStyle(model.recoveryLocked ? Color.orange : .secondary).lineLimit(1).help(model.targetMessage)
+            if let status=model.nearbyTargets,model.targetingEnabled,model.connected,status.ready {
+                VStack(alignment:.leading,spacing:4){
+                    HStack {
+                        Text("总血量").font(.caption.weight(.medium))
+                        Spacer()
+                        Text(status.totalHealthText).font(.system(size:10,design:.monospaced)).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
+                    }
+                    MonsterHealthBar(fraction:status.totalFraction,color:.blue).frame(height:18)
+                }
+                .help("当前列表怪物的剩余血量之和 ÷ 最大血量之和；包含图腾，怪物离开列表后重新计算。")
+                .accessibilityElement(children:.ignore)
+                .accessibilityLabel("当前列表总血量，\(String(format:"%.1f%%",status.totalFraction*100))，\(status.totalHealthText)")
+            }
             Divider()
             GeometryReader {geometry in
                 let rows=model.nearbyTargets?.rows ?? []
