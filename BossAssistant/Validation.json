@@ -249,5 +249,16 @@
       "tests": "All four Runtime suites, three-profile cache policy, boss selection and update policy tests pass. Signed native release verified. Main/tag GitHub CI40896868485/40896868801 both success.",
       "live": "Native nearby panel autoHighest on: healing totems786461/786460 at92.7%/83.3% remained visible; selected normal orc shaman786439 at49.2%, another shaman786440 at47.5%. Confirms automatic mode skips actual healing totems. Automatic mode was enabled by user activity during validation and left as observed."
     }
+  },
+  "total_health_1_4_4": {
+    "date": "2026-10-30",
+    "build": 31,
+    "change": "Nearby panel aggregate current HP / maximum HP across current rows, including totems; refreshed with existing polling. Empty list 0%; disconnected or unready aggregate hidden.",
+    "tests": "Four Runtime suites, cache policy, boss selection, update policy passed. Temporary signed installer rejection/rollback/replacement passed. Weighted aggregate 950/1000, empty, zero maximum, clamping checked using actual model definitions. Native signed build passes.",
+    "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.4.4",
+    "archive_sha256": "7bd121f3a4eeb124c6d89ac1e683318fb9215f731f7831b18cc388878207ca47",
+    "deployment": "In-app About/Updates discovered 1.4.4; One-click Update downloaded official package, replaced and reopened. UpdateResult success. Installed version 1.4.4/build31, deep strict signature and fixed signer/version verifier pass.",
+    "live": "Reconnected; nearby status ready, manual mode, empty live scope displays aggregate 0/0 and0.0%. Screenshot layout verified. List left enabled with automatic targeting off, matching pre-update mode. Runtime unchanged; no reinjection needed.",
+    "limits": "Nonempty aggregate verified with model data, not live monsters this run. This Mac only; no Developer ID notarization."
   }
 }
