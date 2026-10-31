@@ -29,3 +29,7 @@ __pycache__/
 # Local research exports and generated reports
 exports/
 outputs/
+
+# MCP dependencies and development bundles
+node_modules/
+mcp/dist/

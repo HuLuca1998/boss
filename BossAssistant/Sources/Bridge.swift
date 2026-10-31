@@ -10,7 +10,7 @@ struct BridgeFailure: LocalizedError { let message:String; var errorDescription:
     private var authenticated:Set<UUID>=[]
     private var controllers:Set<UUID>=[]
     var externalRequest:((String,[String:Any]) async throws -> Data)?
-    private let externalOps:Set<String>=["exploreMap","exploreUI","exploreRender","exploreClick","exploreFollow","exploreMove","exploreStop","location","list"]
+    private let externalOps:Set<String>=["exploreMap","exploreUI","exploreState","exploreRender","exploreClick","exploreFollow","exploreMove","exploreStop","location","list"]
     private var pending:[Int:(Result<Data,Error>)->Void]=[:]
     private var sequence=0
     var onChange:((Bool)->Void)?

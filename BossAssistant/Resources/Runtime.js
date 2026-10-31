@@ -539,11 +539,11 @@
 
   // Nearby monster selection uses the same distance gate and handler as a normal click.
   var targeting={enabled:false,autoHighest:false,world:null,scope:0,owned:null,lastSwitch:0,locked:false};
-  function targetContext(){
+  function targetContext(readOnly){
     var scene=SceneMgr.inst.GetCurSceneType(),battle=CombatMgr.inst.GetBattleBySceneType(scene);
     var data=battle && battle.battleData,world=data && data.world;
-    if(world!==targeting.world){targeting.world=world;targeting.scope++;targeting.owned=null;targeting.lastSwitch=0;}
-    if(!targeting.enabled || !world || !battle._fighting || CombatMgr.inst.GetCurRenderSceneType()!==scene || !data.CheckCurHeroCreated() || CombatTPMgr.inst.GetIsTPing())return null;
+    if(!readOnly && world!==targeting.world){targeting.world=world;targeting.scope++;targeting.owned=null;targeting.lastSwitch=0;}
+    if((!readOnly && !targeting.enabled) || !world || !battle._fighting || CombatMgr.inst.GetCurRenderSceneType()!==scene || !data.CheckCurHeroCreated() || CombatTPMgr.inst.GetIsTPing())return null;
     var monitor=world.GetGlobalComp(CompEnum.GMonitor),eid=monitor && monitor.GetHeroEid(world.localAgentId),hero=eid && world.GetEntity(eid);
     if(!hero || UtilsInterface.EntityUtils.CheckEntityHasDieTypeTag(hero))return null;
     var transform=hero.Get(RCompEnum.RTransform),controller=world.GetGlobalComp(RCompEnum.GController);
@@ -632,7 +632,7 @@
       var events=model.GetOutEventCfgListByInsId(ins).map(function(c){
         var info=model.GetSimpleEventInfo(ins,c.id),live=model.GetOutEventInfoByEventId(c.id),pos=null;
         try {var p=model.GetOutEventPosByEventId(c.id);pos={x:p.x,y:p.y,z:p.z};}catch(e){}
-        return {eventId:c.id,type:c.type,typeName:model.GetEventTypeName(c.type),name:L(c.name||c.event_name||''),
+        return {eventId:c.id,type:c.type,typeName:model.GetEventTypeName(c.type),name:L(c.name||c.event_name||c.text||''),conditions:{trigger:c.trigger_limit||null,appearance:c.appear_limit||null,description:c.trigger_limit_desc ? L(c.trigger_limit_desc) : null},
           counted:c.is_count===1,weight:c.finish_pro||1,hidden:c.is_hidden===1,visible:model.CheckOutEventIsCanShowInMap(c,ins),
           status:live ? live.status : info ? info.status : null,observed:!!(live||info),
           done:!!info && info.status===types.outevent_status.got,allowed:exploreAllowed(c.type),position:pos};
@@ -640,7 +640,7 @@
       var fog=null;
       if(typeof WarFogMgr!=='undefined'){
         var f=WarFogMgr.inst,known=f.hasInfoFields.has(field),origin=WildMapMgr.inst.MapId2MapPos(map,new Laya.Vector3());
-        fog={observed:known,allRevealed:known ? f.IsMapIdAllUnlock(map) : null,division:WarFogMgr.MAP_DIVISION,blockSize:WarFogMgr.BlockSize,
+        fog={observed:known,allRevealed:known ? f.IsMapIdAllUnlock(map) : null,division:WarFogMgr.MAP_DIVISION,bitsPerWord:WarFogMgr.FogInfoLength,blockSize:WarFogMgr.BlockSize,
           origin:{x:origin.x,z:origin.z},words:m.includeFog===true && known ? (f.fieldId2FogInfoList.get(field)||[]).slice() : null};
       }
       return {fieldId:field,insId:ins,mapId:map,name:wild.GetFieldNameByFieldId(field),unlocked:wild.CheckFieldIsUnlock(field),fog:fog,
@@ -649,7 +649,22 @@
     var counts=model.GetAreaOutEventProgress(area,1);
     return {version:1,at:Date.now(),location:locationSnapshot(),areaId:area,areas:Object.keys(areas).map(function(k){return areas[k];}),
       progress:Object.keys(counts).map(function(k){return {type:Number(k),name:model.GetEventTypeName(Number(k)),done:counts[k][0],total:counts[k][1],allowed:exploreAllowed(Number(k))};}),
-      fields:rows,excluded:['方尖碑','聚魂匣'],following:model.GetFollowParams() ? model.GetFollowParams().GetUid() : null};
+      fields:rows,excluded:['方尖碑','聚魂匣'],following:model.GetFollowParams() ? model.GetFollowParams().GetUid()||null : null};
+  }
+  function exploreState(){
+    var loc=locationSnapshot(),scene=SceneMgr.inst.GetCurSceneType(),battle=CombatMgr.inst.GetBattleBySceneType(scene),data=battle && battle.battleData;
+    var ctx=targetContext(true),heroAttr=ctx && ctx.hero.Get(CompEnum.Attr),follow=OutEventModel.inst.GetFollowParams();
+    var params=follow && follow.GetParams(),pos=follow && follow.GetFollowPos(),single=OutEventSingleRouteModel.inst;
+    var board=single.defaultSOE_BB,target=board && board.curTargetOutEventPos;
+    var rows=ctx ? targetRows(ctx).map(function(r){var e=ctx.world.GetEntity(Number(r.eid)),t=e && e.Get(RCompEnum.RTransform);r.position=t ? {x:t.pos.x,y:t.pos.y,z:t.pos.z} : null;return r;}) : [];
+    return {version:1,at:Date.now(),scriptIdentity:'__CODEX_SCRIPT_ID__',location:loc,
+      locked:assist.locked || targeting.locked,nearbyReady:!!ctx,selectionRadius:ctx ? ctx.radius : null,enemies:rows,
+      combat:{auto:data && typeof data.IsHeroAutoUseSkill==='function' ? data.IsHeroAutoUseSkill() : null,
+        heroDead:data && typeof data.CheckCurHeroIsDead==='function' ? data.CheckCurHeroIsDead() : null,
+        hp:heroAttr ? heroAttr.GetNowHp(true) : null,maxHp:heroAttr ? heroAttr.GetMaxHp() : null},
+      navigation:{singleActive:single.IsInSingleOutEventRouting(),eventId:single.singleOutEventRoutingEventId||null,
+        target:target ? {x:target.x,y:target.y,z:target.z} : null,wholeActive:OutEventRouteModel.inst.IsInOutEventRouting(),
+        follow:follow ? {type:follow.GetFollowType(),uid:follow.GetUid()||null,auto:!!(params && params.isAutoGoTo),position:pos ? {x:pos.x,y:pos.y,z:pos.z} : null} : null}};
   }
   function exploreUI(){
     exploreNodes={};exploreRevision++;exploreAt=Date.now();var rows=[],truncated=false;
@@ -670,6 +685,7 @@
   function exploreDispatch(m){
     if(m.op==='exploreMap')return exploreMap(m);
     if(m.op==='exploreUI')return exploreUI();
+    if(m.op==='exploreState')return exploreState();
     if(m.op==='exploreRender'){
       var stage=Laya.stage,w=Math.ceil(stage.width),h=Math.ceil(stage.height),data=null;
       if(!(w>0&&h>0&&w*h<=5000000))throw Error('render_size_unsupported');
@@ -722,7 +738,7 @@
   }
 
   function dispatch(m) {
-    if(['exploreMap','exploreUI','exploreRender','exploreClick','exploreFollow','exploreMove','exploreStop'].indexOf(m.op)>=0)return exploreDispatch(m);
+    if(['exploreMap','exploreUI','exploreState','exploreRender','exploreClick','exploreFollow','exploreMove','exploreStop'].indexOf(m.op)>=0)return exploreDispatch(m);
     if(['targetMode','targetTick','targetSelect'].indexOf(m.op)>=0)return targetDispatch(m);
     if(m.op==='assistStatus')return assistStatus();
     if(m.op==='assistRun')return assistRun(m);

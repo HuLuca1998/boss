@@ -52,6 +52,8 @@ def main():
     output = APP / "build" / "release" / version
     if output.exists():
         raise SystemExit(f"构建目录已存在：{output}；检查旧产物后移走再试")
+    run("npm", "ci", "--prefix", str(ROOT / "mcp"))
+    run("npm", "test", "--prefix", str(ROOT / "mcp"))
     for test in ["keyboard-runtime.cjs", "assistance-runtime.cjs", "location-runtime.cjs", "targeting-runtime.cjs", "exploration-runtime.cjs"]:
         run("node", str(APP / "Tests" / test))
     run("zsh", str(ROOT / "scripts/test-update.sh"))

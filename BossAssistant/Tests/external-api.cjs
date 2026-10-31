@@ -13,7 +13,8 @@ p.stdout.on('data',async b=>{
   game.addEventListener('message',b=>{const r=JSON.parse(b.data);gameRequests++;game.send(JSON.stringify({id:r.id,result:{echo:r.op,areaId:7}}))});
   const controller=await connect(m[1],'yzlm-controller-v1');let hello=await next(controller);assert.equal(hello.connected,true);
   controller.send(JSON.stringify({id:42,op:'exploreMap'}));let reply=await next(controller);assert.equal(reply.id,42);assert.equal(reply.result.echo,'exploreMap');
-  controller.send(JSON.stringify({id:43,op:'eval',code:'no'}));reply=await next(controller);assert.equal(reply.error,'unsupported_operation');assert.equal(gameRequests,1);
+  controller.send(JSON.stringify({id:46,op:'exploreState'}));reply=await next(controller);assert.equal(reply.result.echo,'exploreState');
+  controller.send(JSON.stringify({id:43,op:'eval',code:'no'}));reply=await next(controller);assert.equal(reply.error,'unsupported_operation');assert.equal(gameRequests,2);
   const other=await connect(m[1],'yzlm-controller-v1');hello=await next(other);assert.equal(hello.connected,true);other.close();
   controller.send(JSON.stringify({id:44,op:'location'}));reply=await next(controller);assert.equal(reply.result.areaId,7);
   const bad=await connect(m[1],'yzlm-controller-v1','wrong');await new Promise(resolve=>bad.addEventListener('close',resolve,{once:true}));

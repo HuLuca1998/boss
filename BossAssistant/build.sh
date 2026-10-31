@@ -14,6 +14,7 @@ fi
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Helpers"
 swiftc -sdk /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -target arm64-apple-macosx14.0 -swift-version 5 -O -parse-as-library "$ROOT"/Sources/*.swift -o "$APP/Contents/MacOS/BossAssistant" -framework SwiftUI -framework AppKit -framework Network -framework CryptoKit
 cp "$ROOT"/Resources/* "$APP/Contents/Resources/"
+node "$ROOT/../mcp/build.mjs" "$APP/Contents/Resources/ExplorationMCP.mjs"
 swiftc -sdk /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -target arm64-apple-macosx14.0 -swift-version 5 -O "$ROOT/Sources/UpdatePolicy.swift" "$ROOT/Updater/main.swift" -o "$APP/Contents/Helpers/BossAssistantUpdater" -framework AppKit -framework Security
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>local.luca.HeroBossAssistant</string><key>CFBundleName</key><string>首领助手</string><key>CFBundleDisplayName</key><string>首领助手</string><key>CFBundleExecutable</key><string>BossAssistant</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleShortVersionString</key><string>1.3.7</string><key>CFBundleVersion</key><string>21</string><key>LSMinimumSystemVersion</key><string>14.0</string><key>NSHighResolutionCapable</key><true/><key>NSPrincipalClass</key><string>NSApplication</string><key>CFBundleIconFile</key><string>AppIcon</string></dict></plist>

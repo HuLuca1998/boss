@@ -288,5 +288,12 @@
       "live": "API move again reached entrance vicinity. Corrected exploreClick on495K HUD opened BreakThroughView and API read title/conditions; API gotoBtn for upper barrier closed panel. Four submaps progress100 confirmed against full counts. Boss not spawned: world-level79 and upper-barrier prerequisites unmet. No purchase or excluded exploration actions.",
       "ci": "Main/tag GitHub Actions cancelled before any test steps. Local suites, signed build and installer tests passed; do not claim CI success."
     }
+  },
+  "exploration_mcp_1_4_7": {
+    "date": "2026-11-01",
+    "build": 34,
+    "change": "Signed App bundles dependency-free-at-runtime MCP stdio adapter, nine tools and bounded observation with MCP progress; read-only combat/navigation state and map prerequisite/fog metadata.",
+    "tests": "Five Runtime suites including pure observation without target-mode enable pass. External API test includes exploreState allowlist. MCP SDK negotiation/schema/RPC/error/image/progress/resource tests pass. Standalone bundled MCP connected over real stdio and read actual area7/four submaps. Native build and temporary signed installer version/signer/replacement/rollback/tamper tests passed.",
+    "limits": "New-map success paths remain untested before opening. Final installed1.4.7 live state/movement/MCP image/stream tests pending deployment; do not claim complete until verified."
   }
 }

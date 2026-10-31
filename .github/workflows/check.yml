@@ -11,6 +11,9 @@ jobs:
         with:
           node-version: '22'
       - run: |
+          npm ci --prefix mcp
+          npm test --prefix mcp
+          node mcp/build.mjs
           node BossAssistant/Tests/keyboard-runtime.cjs
           node BossAssistant/Tests/assistance-runtime.cjs
           node BossAssistant/Tests/location-runtime.cjs
