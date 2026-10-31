@@ -280,6 +280,13 @@
     "build": 33,
     "fix": "KButton native down/up instead of CLICK; field progress uses observed weighted normal events and null for incomplete observations.",
     "tests": "Five Runtime suites pass, including KButton down/up and cooldown; external API integration passes. Signed build passes. Installer rejection, rollback, replacement and tamper tests pass. Cache policy and boss selection will rerun in release script.",
-    "limits": "Native click correction pending post-release live verification. Entrance boss remains behind world-level79 and upper-barrier prerequisites."
+    "limits": "Native click correction pending post-release live verification. Entrance boss remains behind world-level79 and upper-barrier prerequisites.",
+    "deployment": {
+      "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.4.6",
+      "sha256": "a0ad532c6fd51b610573046f20fe9913c76d0213212266731c493e010c748f35",
+      "install": "In-app check discovered1.4.6 and One-click Update installed official stable package. Installed1.4.6/build33; deep strict codesign and fixed signer/version verifier pass. Installed runtime matches repository. Re-injected from app UI and verified ready wild scene.",
+      "live": "API move again reached entrance vicinity. Corrected exploreClick on495K HUD opened BreakThroughView and API read title/conditions; API gotoBtn for upper barrier closed panel. Four submaps progress100 confirmed against full counts. Boss not spawned: world-level79 and upper-barrier prerequisites unmet. No purchase or excluded exploration actions.",
+      "ci": "Main/tag GitHub Actions cancelled before any test steps. Local suites, signed build and installer tests passed; do not claim CI success."
+    }
   }
 }
