@@ -266,6 +266,20 @@
     "build": 32,
     "tests": "Five Runtime suites pass; new external controller integration covers token rejection, controller/game isolation, operation allowlist, response correlation and disconnect. Existing Bridge authentication and 2000 concurrent requests plus 100 disconnect failures pass. Cache policy, boss selection and update policy pass. Signed native build and installer identity/version rejection, rollback, replacement and tamper tests pass.",
     "limits": "New-map completion not claimed before 10:00 opening. Live exploration, render support and native click will be checked after installation and reinjection. This Mac only.",
-    "test_note": "Initial installer run overlapped an active build and copied an incomplete app; rerun after build completion passed. Real installed app untouched during tests."
+    "test_note": "Initial installer run overlapped an active build and copied an incomplete app; rerun after build completion passed. Real installed app untouched during tests.",
+    "deployment": {
+      "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.4.5",
+      "sha256": "80df89d29a5c739b2c80bb0ed7a9ace79bc1bf03790032fd1af246f33d392471",
+      "installed": "In-app check found1.4.5; One-click Update downloaded stable package and reopened. Installed1.4.5/build32, deep strict signature and fixed signer/version verifier pass. Reinjected through native app UI; new script connected.",
+      "live": "exploreMap returns19 areas and authoritative event counts; UI1326 nodes without truncation; Conch render JPEG2561x1920 works for UI, black3D background. exploreMove advanced hero to requested entrance vicinity. Found KButton click no-op and field progress0 despite complete counts; fixed in1.4.6.",
+      "ci": "Main and tag CI cancelled before test steps; explicit reruns also cancelled. Local checks completed."
+    }
+  },
+  "exploration_api_1_4_6": {
+    "date": "2026-11-01",
+    "build": 33,
+    "fix": "KButton native down/up instead of CLICK; field progress uses observed weighted normal events and null for incomplete observations.",
+    "tests": "Five Runtime suites pass, including KButton down/up and cooldown; external API integration passes. Signed build passes. Installer rejection, rollback, replacement and tamper tests pass. Cache policy and boss selection will rerun in release script.",
+    "limits": "Native click correction pending post-release live verification. Entrance boss remains behind world-level79 and upper-barrier prerequisites."
   }
 }

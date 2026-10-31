@@ -633,7 +633,7 @@
         var info=model.GetSimpleEventInfo(ins,c.id),live=model.GetOutEventInfoByEventId(c.id),pos=null;
         try {var p=model.GetOutEventPosByEventId(c.id);pos={x:p.x,y:p.y,z:p.z};}catch(e){}
         return {eventId:c.id,type:c.type,typeName:model.GetEventTypeName(c.type),name:L(c.name||c.event_name||''),
-          counted:c.is_count===1,hidden:c.is_hidden===1,visible:model.CheckOutEventIsCanShowInMap(c,ins),
+          counted:c.is_count===1,weight:c.finish_pro||1,hidden:c.is_hidden===1,visible:model.CheckOutEventIsCanShowInMap(c,ins),
           status:live ? live.status : info ? info.status : null,observed:!!(live||info),
           done:!!info && info.status===types.outevent_status.got,allowed:exploreAllowed(c.type),position:pos};
       });
@@ -644,7 +644,7 @@
           origin:{x:origin.x,z:origin.z},words:m.includeFog===true && known ? (f.fieldId2FogInfoList.get(field)||[]).slice() : null};
       }
       return {fieldId:field,insId:ins,mapId:map,name:wild.GetFieldNameByFieldId(field),unlocked:wild.CheckFieldIsUnlock(field),fog:fog,
-        progress:model.GetCurNormalProgress(ins),events:events};
+        progress:(function(){var total=0,done=0,observed=true;events.forEach(function(e){if(e.counted && !e.hidden){total+=e.weight;if(e.done)done+=e.weight;if(!e.observed)observed=false;}});return total && observed ? Math.floor(done/total*100) : null;})(),events:events};
     });
     var counts=model.GetAreaOutEventProgress(area,1);
     return {version:1,at:Date.now(),location:locationSnapshot(),areaId:area,areas:Object.keys(areas).map(function(k){return areas[k];}),
@@ -687,7 +687,13 @@
       if(!n || n.destroyed || !n.mouseEnabled || n.disabled || !n.parent)throw Error('node_not_clickable');
       var parent=n;
       while(parent){if(parent.visible===false || parent.destroyed)throw Error('node_not_visible');parent=parent.parent;}
-      var ev=new Laya.Event();ev.setTo(Laya.Event.CLICK,n,n);n.event(Laya.Event.CLICK,ev);
+      if(typeof KButton!=='undefined' && n instanceof KButton){
+        if(n.isClickCoolDown)throw Error('button_cooldown');
+        var down=new Laya.Event();down.setTo(Laya.Event.MOUSE_DOWN,n,n);n.event(Laya.Event.MOUSE_DOWN,down);
+        var up=new Laya.Event();up.setTo(Laya.Event.MOUSE_UP,n,n);n.event(Laya.Event.MOUSE_UP,up);
+      } else {
+        var ev=new Laya.Event();ev.setTo(Laya.Event.CLICK,n,n);n.event(Laya.Event.CLICK,ev);
+      }
       exploreNodes={};exploreRevision++;
       return {requested:true,nodeId:String(m.nodeId)};
     }
