@@ -4,7 +4,7 @@ import {z} from 'zod';
 import {GameClient} from './game-client.mjs';
 export const instructions='Use game_state and game_map before acting; read fresh UI and identify a button by its text and ancestors before game_click. requested=true is not completion. Verify actual position, enemy HP, event done and counts after every action. Unobserved data is unknown. Never act on 方尖碑 or 聚魂匣 for the current exploration task. Stop on account protection. Do not purchase, share, or spend paid resources. The engine render contains UI only; use native window screenshots for 3D. game_watch observes changes for a bounded interval; it does not automate exploration or stop movement when cancelled.';
 export function createServer(game=new GameClient()){
-  const server=new McpServer({name:'boss-assistant',version:'1.4.7'},{instructions});
+  const server=new McpServer({name:'boss-assistant',version:'1.4.8'},{instructions});
   const result=value=>({content:[{type:'text',text:JSON.stringify(value)}],structuredContent:value});
   const safe=fn=>async(...args)=>{try{return await fn(...args);}catch(e){return {isError:true,content:[{type:'text',text:e.message}]};}};
   function register(name,description,inputSchema,op,readOnly=true){
@@ -12,7 +12,7 @@ export function createServer(game=new GameClient()){
   }
   register('game_map','Read regions, submaps, event IDs/positions/completion, prerequisites and optionally observed fog. Locked/unobserved maps are not explored.',{areaId:z.number().int().positive().optional(),includeFog:z.boolean().optional()},'exploreMap');
   register('game_state','Read actual scene, hero HP/death/auto battle, nearby enemy IDs/HP/positions, and native navigation status. No target selection or movement.',{},'exploreState');
-  register('game_ui','Read visible UI tree with text, parent IDs, clickable nodes and revision. IDs expire in10 seconds or after another UI read/click.',{},'exploreUI');
+  register('game_ui','Read2D UI tree, visible window IDs, text, parent IDs, clickable nodes and revision. Optional viewId focuses one visible window. IDs expire in10 seconds or after another UI read/click.',{viewId:z.number().int().positive().optional()},'exploreUI');
   register('game_move','Request native movement to world x,z. Observe actual position with game_state/game_watch to confirm; no teleport bypass.',{x:z.number().finite(),z:z.number().finite()},'exploreMove',false);
   register('game_follow','Follow an authorized gathering/chest/teleport/monster-group/pollution event using native game routing; refuses completed, locked or excluded events.',{eventId:z.number().int().positive()},'exploreFollow',false);
   register('game_click','Click a node from the latest UI snapshot, after checking text and ancestors; preserve native button checks. Never blindly confirm purchases or excluded activities.',{revision:z.number().int().nonnegative(),nodeId:z.string().min(1)},'exploreClick',false);

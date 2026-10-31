@@ -666,10 +666,20 @@
         target:target ? {x:target.x,y:target.y,z:target.z} : null,wholeActive:OutEventRouteModel.inst.IsInOutEventRouting(),
         follow:follow ? {type:follow.GetFollowType(),uid:follow.GetUid()||null,auto:!!(params && params.isAutoGoTo),position:pos ? {x:pos.x,y:pos.y,z:pos.z} : null} : null}};
   }
-  function exploreUI(){
+  function exploreUI(m){
+    var views=[],root=Laya.stage;
+    if(typeof UIMgr!=='undefined'){
+      var mgr=UIMgr.inst,opened=mgr._openViews;
+      if(opened && opened.forEach)opened.forEach(function(v,id){
+        if(v && v.gameObject && v.gameObject.visible && !v.gameObject.destroyed)views.push({id:v.viewVo ? v.viewVo.id : Number(id),name:v.viewName||(v.viewVo && v.viewVo.name)||'',order:typeof mgr.GetOpenViewOrder==='function' ? mgr.GetOpenViewOrder(v) : null});
+      });
+      if(m.viewId!==undefined){var view=mgr.GetView(Number(m.viewId));if(!view || !view.gameObject || !view.gameObject.visible || view.gameObject.destroyed)throw Error('view_not_visible');root=view.gameObject;}
+    } else if(m.viewId!==undefined)throw Error('view_not_visible');
     exploreNodes={};exploreRevision++;exploreAt=Date.now();var rows=[],truncated=false;
     function visit(n,parent,depth){
-      if(!n || n.destroyed || n.visible===false || depth>24)return;
+      if(!n || n.destroyed || n.visible===false)return;
+      if(typeof Laya.Scene3D==='function' && n instanceof Laya.Scene3D)return;
+      if(depth>24){truncated=true;return;}
       if(rows.length>=1500){truncated=true;return;}
       var id=String(rows.length+1),point=null;
       try{var p=n.localToGlobal(new Laya.Point(0,0));point={x:p.x,y:p.y};}catch(e){}
@@ -679,12 +689,12 @@
       exploreNodes[id]=n;
       var children=n._children||[];for(var i=0;i<children.length;i++)visit(children[i],id,depth+1);
     }
-    visit(Laya.stage,null,0);
-    return {version:1,revision:exploreRevision,at:exploreAt,width:Laya.stage.width,height:Laya.stage.height,truncated:truncated,nodes:rows};
+    visit(root,null,0);
+    return {version:1,revision:exploreRevision,at:exploreAt,width:Laya.stage.width,height:Laya.stage.height,truncated:truncated,viewId:m.viewId===undefined ? null : Number(m.viewId),views:views,nodes:rows};
   }
   function exploreDispatch(m){
     if(m.op==='exploreMap')return exploreMap(m);
-    if(m.op==='exploreUI')return exploreUI();
+    if(m.op==='exploreUI')return exploreUI(m);
     if(m.op==='exploreState')return exploreState();
     if(m.op==='exploreRender'){
       var stage=Laya.stage,w=Math.ceil(stage.width),h=Math.ceil(stage.height),data=null;

@@ -3,14 +3,16 @@ let socket,followed,moved,clicked=0,now=1000;
 const configs=[{id:1,type:1,ins_id:10,is_count:1},{id:2,type:2,ins_id:10,is_count:1},{id:3,type:3,ins_id:10,is_count:1},{id:4,type:4,ins_id:20,is_count:1},{id:5,type:4,ins_id:10,is_count:1}];
 class KButton{event(type){if(type==='down')this.held=true;if(type==='up'&&this.held){clicked++;this.held=false;}}}
 const labels={1:'采集物',2:'聚魂匣',3:'方尖碑',4:'地图宝箱'};
+class Scene3D{constructor(){this.visible=true;this._children=Array.from({length:2000},()=>({visible:true,_children:[]}));}}
 const stage={width:600,height:800,visible:true,name:'stage',_children:[]};
-const button={parent:stage,visible:true,mouseEnabled:true,name:'collect',text:'采集',_children:[],event(){clicked++}};stage._children.push(button);
+const button={parent:stage,visible:true,mouseEnabled:true,name:'collect',text:'采集',_children:[],event(){clicked++}};stage._children.push(new Scene3D(),button);
 const wild={GetCurAreaId:()=>7,GetFieldIdsInArea:()=>[1,2],CheckAreaIsUnlock:()=>true,GetFieldIdByInsId:id=>id/10,GetInsIdByFieldId:id=>id*10,GetMapIdByFieldId:id=>id,GetFieldNameByFieldId:id=>'field'+id,CheckFieldIsUnlock:id=>id===1,GetCurFieldId:()=>1,GetFieldCfg:()=>({}),GetAreaNameByAreaId:()=>'',GetCurWildInsId:()=>10};
 const model={GetEventTypeName:t=>labels[t],GetOutEventCfgListByInsId:ins=>configs.filter(c=>c.ins_id===ins),GetSimpleEventInfo:(ins,id)=>id===1?{status:3}:null,GetOutEventInfoByEventId:()=>null,GetOutEventPosByEventId:()=>({x:1,y:0,z:2}),CheckOutEventIsCanShowInMap:()=>true,GetCurNormalProgress:()=>50,GetAreaOutEventProgress:()=>({1:[1,2]}),StopWholeMapOutEventFollow(){},StopHideMapOutEventFollow(){},GetFollowParams:()=>null};
 const ctx={KButton,WebSocket:class{constructor(){socket=this;this.readyState=1;}send(v){this.last=JSON.parse(v)}},setTimeout(fn,ms){if(ms===1000)fn()},Date:{now:()=>now},
  WildIdleModel:{inst:wild},OutEventModel:{inst:model},types:{outevent_status:{got:3}},L:x=>x,
  ConfigMgr:{inst:{GetCfg:()=>({ForEach:fn=>fn({area:7,area_name_show:'测试区'})}),GetKey:(table,id)=>configs.find(c=>c.id===id)}},configTable:{field:1,outevent:2},
- Laya:{stage,Point:class{},Event:class{static CLICK='click';static MOUSE_DOWN='down';static MOUSE_UP='up';setTo(){}},Vector3:class{constructor(x,y,z){Object.assign(this,{x,y,z})}}},
+ UIMgr:{inst:{_openViews:new Map([[42,{viewVo:{id:42,name:"testPanel"},gameObject:button}]]),GetOpenViewOrder:()=>1,GetView:id=>id===42?{gameObject:button}:null}},
+ Laya:{stage,Scene3D,Point:class{},Event:class{static CLICK='click';static MOUSE_DOWN='down';static MOUSE_UP='up';setTo(){}},Vector3:class{constructor(x,y,z){Object.assign(this,{x,y,z})}}},
  MapPathMgr:{inst:{CheckIsMapReachable:(x,z)=>x<100}},
  EventFollowMgr:{inst:{ShowEventFollowByOutEventId:id=>followed=id,ShowEventFollowByParams:p=>moved=p.pos}},
 };
@@ -24,9 +26,11 @@ assert.match(call('exploreFollow',{eventId:2}).error,/not_authorized/);assert.ma
 assert.equal(call('exploreFollow',{eventId:5}).result.completed,false);assert.equal(followed,5);
 assert.equal(call('exploreMove',{x:2,z:3}).result.requested,true);assert.equal(moved.x,2);assert.match(call('exploreMove',{x:101,z:3}).error,/unreachable/);
 r=call('exploreUI');assert(!r.error,r.error);let revision=r.result.revision;
+assert.equal(r.result.nodes.length,2);assert.equal(r.result.truncated,false);assert.equal(r.result.views[0].id,42);
 assert.equal(call('exploreClick',{revision,nodeId:'2'}).result.requested,true);assert.equal(clicked,1);assert.match(call('exploreClick',{revision,nodeId:'2'}).error,/stale/);
 r=call('exploreUI');revision=r.result.revision;button.visible=false;assert.match(call('exploreClick',{revision,nodeId:'2'}).error,/not_visible/);button.visible=true;
 r=call('exploreUI');now+=11000;assert.match(call('exploreClick',{revision:r.result.revision,nodeId:'2'}).error,/stale/);
 assert.match(call('exploreMove',{x:'bad',z:1}).error,/invalid_position/);
 Object.setPrototypeOf(button,KButton.prototype);delete button.event;now+=1;r=call('exploreUI');assert.equal(call('exploreClick',{revision:r.result.revision,nodeId:'2'}).result.requested,true);assert.equal(clicked,2);button.isClickCoolDown=true;r=call('exploreUI');assert.match(call('exploreClick',{revision:r.result.revision,nodeId:'2'}).error,/cooldown/);
+r=call('exploreUI',{viewId:42});assert.equal(r.result.nodes.length,1);assert.equal(r.result.viewId,42);assert.match(call('exploreUI',{viewId:99}).error,/view_not_visible/);
 console.log('PASS exploration map status, excluded events, locked fields, stale/hidden UI, movement validation');

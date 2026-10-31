@@ -294,6 +294,13 @@
     "build": 34,
     "change": "Signed App bundles dependency-free-at-runtime MCP stdio adapter, nine tools and bounded observation with MCP progress; read-only combat/navigation state and map prerequisite/fog metadata.",
     "tests": "Five Runtime suites including pure observation without target-mode enable pass. External API test includes exploreState allowlist. MCP SDK negotiation/schema/RPC/error/image/progress/resource tests pass. Standalone bundled MCP connected over real stdio and read actual area7/four submaps. Native build and temporary signed installer version/signer/replacement/rollback/tamper tests passed.",
-    "limits": "New-map success paths remain untested before opening. Final installed1.4.7 live state/movement/MCP image/stream tests pending deployment; do not claim complete until verified."
+    "limits": "New-map success paths remain untested before opening. Final installed1.4.7 live state/movement/MCP image/stream tests pending deployment; do not claim complete until verified.",
+    "deployment": {
+      "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.4.7",
+      "sha256": "0fdd60320db693469763c5bb1995115b53928439bf156389908a8f161a0c5409",
+      "install": "App one-click update succeeded; installed1.4.7/build34, deep signature and fixed signer/version verify passed; reinjected and live connected. Global boss-assistant MCP registered against signed App bundle.",
+      "live": "Actual SDK stdio test passed9 tools, map, heroHP/native routing,UI tree,JPEG image,4 samples and1 initial progress notification,invalid movement rejection. Full live audit passed map/fog and excluded/completed-event rejection, then correctly failed truncated UI assertion:3D effect nodes filled1500-node limit. Fixed in1.4.8.",
+      "ci": "Cancelled before steps; no CI success claim."
+    }
   }
 }

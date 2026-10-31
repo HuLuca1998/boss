@@ -1,6 +1,6 @@
 # 本机 MCP 探索服务
 
-1.4.7 正式 App 内含 `Contents/Resources/ExplorationMCP.mjs`，使用 Node 22+ 和官方 MCP TypeScript SDK，通过 stdio 提供工具。无新增 HTTP 监听端口；内部维持与助手的本机鉴权 WebSocket，重新连接时读取当前端口和令牌，配置和日志不含凭据。不自动重试有副作用的请求，断连后须先检查实际状态。
+1.4.8 正式 App 内含 `Contents/Resources/ExplorationMCP.mjs`，使用 Node 22+ 和官方 MCP TypeScript SDK，通过 stdio 提供工具。无新增 HTTP 监听端口；内部维持与助手的本机鉴权 WebSocket，重新连接时读取当前端口和令牌，配置和日志不含凭据。不自动重试有副作用的请求，断连后须先检查实际状态。
 
 ## 接入 Codex
 
@@ -27,7 +27,7 @@ node mcp/call.mjs game_render '{}' /tmp/game-ui.jpg
 | --- | --- |
 | game_map | 区域解锁、子地图、事件ID与坐标、完成状态、前置条件、已观测迷雾 |
 | game_state | 场景、生命、死亡/自动战斗、附近敌人实体ID/位置/血量和原生寻路状态，只读 |
-| game_ui | 可见界面树、文字、父子关系、按钮编号与快照版本 |
+| game_ui | 过滤3D后的可见2D界面树、窗口列表、文字、父子关系、按钮编号与快照版本，可传viewId聚焦窗口 |
 | game_render | 原生 JPEG 作为 MCP image 内容返回；目前3D黑色，仅UI，需窗口截图补足 |
 | game_move | 原生位置寻路，结果需再次观察 |
 | game_follow | 原生单事件跟随，保留已完成、解锁和事件范围限制 |
