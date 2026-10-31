@@ -15,6 +15,7 @@ function check(name,fn){const detail=fn();report.checks.push({name,passed:true,d
 function rejected(name,op,fields,pattern){check(name,()=>{assert.throws(()=>call(op,fields),pattern);return 'Rejected by actual runtime';});}
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+async function confirmStop(){call('exploreStop');for(let i=0;i<10;i++){const s=call('exploreState');if(!s.navigation.singleActive&&!s.navigation.wholeActive&&s.combat.auto===false)return s;await wait(200);}throw Error('Stop not confirmed by actual state');}
 let start;
 try{
   const state=call('exploreState');start=state.location.heroPos;
@@ -35,15 +36,15 @@ try{
   const again=call('exploreState');check('reading and rejected calls do not move or enable combat',()=>{assert(distance(start,again.location.heroPos)<0.2);assert.equal(again.combat.auto,state.combat.auto);assert.equal(again.navigation.singleActive,state.navigation.singleActive);return true;});
   if(move){
     assert.equal(state.combat.auto,false,'Disable auto combat before movement test');assert.equal(state.navigation.singleActive,false,'Stop existing route before test');
-    // Known walkable approach immediately south of the currently observed gate.
+    // Use the independently verified spawn-to-gate route; a short straight southern step crosses nonwalkable terrain.
     assert(distance(start,{x:-9264.3,z:1389.9})<2,'Movement test is scoped to the verified gate approach');
-    const target={x:start.x,z:start.z-12};call('exploreMove',target);let samples=[],arrived=false;
-    for(let i=0;i<20;i++){await wait(400);const s=call('exploreState');samples.push({position:s.location.heroPos,active:s.navigation.singleActive});if(distance(target,s.location.heroPos)<8){arrived=true;break;}}
+    const target={x:-9324.8,z:1286.3};call('exploreMove',target);let samples=[],arrived=false;
+    for(let i=0;i<50;i++){await wait(400);const s=call('exploreState');samples.push({position:s.location.heroPos,active:s.navigation.singleActive});if(distance(target,s.location.heroPos)<8){arrived=true;break;}}
     check('real movement changes actual hero position',()=>{assert(arrived);assert(samples.some(s=>distance(start,s.position)>3));return {samples};});
-    call('exploreStop');const stopped=call('exploreState');check('stop clears native path and auto combat',()=>{assert.equal(stopped.navigation.singleActive,false);assert.equal(stopped.navigation.wholeActive,false);assert.equal(stopped.combat.auto,false);return true;});
-    call('exploreMove',{x:start.x,z:start.z+3});let returned=false;
-    for(let i=0;i<20;i++){await wait(400);if(distance(start,call('location').heroPos)<5){returned=true;break;}}
-    call('exploreStop');check('returned to gate approach',()=>{assert(returned);return call('location').heroPos;});
+    await confirmStop();const stopped=call('exploreState');check('stop clears native path and auto combat',()=>{assert.equal(stopped.navigation.singleActive,false);assert.equal(stopped.navigation.wholeActive,false);assert.equal(stopped.combat.auto,false);return true;});
+    call('exploreMove',{x:-9264.6,z:1395.9});let returned=false;
+    for(let i=0;i<50;i++){await wait(400);if(distance(start,call('location').heroPos)<5){returned=true;break;}}
+    await confirmStop();check('returned to gate approach',()=>{assert(returned);return call('location').heroPos;});
   }
   report.limitations.push('New-map gathering/chest/teleport and successful event-follow completion remain untested before opening; no uncompleted authorized event is available in the completed current area.');
   report.limitations.push('Conch render includes UI only; 3D scene needs native window screenshots.');

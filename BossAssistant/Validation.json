@@ -302,5 +302,16 @@
       "live": "Actual SDK stdio test passed9 tools, map, heroHP/native routing,UI tree,JPEG image,4 samples and1 initial progress notification,invalid movement rejection. Full live audit passed map/fog and excluded/completed-event rejection, then correctly failed truncated UI assertion:3D effect nodes filled1500-node limit. Fixed in1.4.8.",
       "ci": "Cancelled before steps; no CI success claim."
     }
+  },
+  "exploration_mcp_ui_1_4_8": {
+    "date": "2026-11-01",
+    "build": 35,
+    "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.4.8",
+    "sha256": "8d2bcd22bdf11b626b9b7bc3331800e71e8ffaa2162e62d209dffc23ad87d006",
+    "deployment": "One-click Update from app installed official1.4.8/build35. Fixed signer/version verifier and deep strict signature pass. Installed Runtime matches repository; reinjected via UI and verified live wild scene. MCP registration points at signed App resource.",
+    "tests": "Five Runtime suites, MCP SDK protocol/schema/image/progress tests, external API integration, native build, signed installer rejection/rollback/replacement/tamper tests pass. Release script repeated cache, boss selection, update and Runtime checks.",
+    "live": "Complete2D tree816–823 nodes; focused Boss condition window30 nodes. Real MCP movement to spawn and return to entrance, stop confirmed.15-second watch30 samples,26 changed snapshots and26 progress notifications. Actual MCP button opened/closed Boss conditions. Live exclusion/completed-event/stale-snapshot/invalid-position checks pass, with no unintended displacement or auto change.",
+    "limits": "Current2749x1920 render exceeds documented5MP cap and correctly errors; actual2561x1920 JPEG was verified in1.4.7, onlyUI/no3D. Native window screenshot verified. New-map collection/chest/teleport/Boss success and live nonempty enemies remain unverified before opening. Short southern test waypoint was nonwalkable and rejected; verified spawn route used instead. Stop confirmation waits actual state rather than immediate response.",
+    "ci": "GitHub checks cancelled before steps; local checks passed, no CI success claimed."
   }
 }
