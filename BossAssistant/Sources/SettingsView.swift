@@ -16,6 +16,7 @@ struct SettingsView:View {
                 VStack(alignment:.leading,spacing:20){
                     if page==0 {
                         Text("辅助功能").font(.headline)
+                        Text("本机探索 API 已启用：地图进度、界面树、截图、原生移动与交互。连接仅限本机，凭据位于用户数据目录；使用前停止首领攻略与附近集火。").font(.caption).foregroundStyle(.secondary)
                         Toggle("键盘控制：方向键 / WASD / ESC 返回",isOn:Binding(get:{model.keyboardEnabled},set:{enabled in Task{await model.setKeyboard(enabled)}})).disabled(!model.connected || model.snapshot == nil || model.keyboardWorking || model.working)
                         Text("只在游戏前台生效；输入文字时暂停。ESC 每按一次返回一层，支持已适配的页面和普通关闭弹窗。").font(.caption).foregroundStyle(.secondary)
                         Text(model.keyboardInputAllowed ? "输入监控已授权" : "输入监控未授权，键盘控制暂不可用").font(.caption).foregroundStyle(model.keyboardInputAllowed ? Color.secondary : Color.orange)

@@ -123,6 +123,17 @@ import CoreGraphics
         if let url=Bundle.main.url(forResource:"EquipmentParts",withExtension:"json"),let data=try? Data(contentsOf:url){equipmentParts=(try? JSONDecoder().decode([EquipmentPart].self,from:data)) ?? []}
         injected=injector.installed
         cacheMessage=injector.cacheDescription
+        bridge.externalRequest={ [weak self] op,fields in
+            guard let self else {throw BridgeFailure(message:"助手已退出")}
+            let mutation=["exploreClick","exploreFollow","exploreMove","exploreStop"].contains(op)
+            if mutation {
+                guard !self.recoveryLocked,!self.working else {throw BridgeFailure(message:"账号保护或维护中，操作暂停")}
+                guard !self.running,!self.targetingEnabled else {throw BridgeFailure(message:"请先停止首领攻略和附近集火，再使用探索 API")}
+            }
+            let data=try await self.bridge.request(op,fields:fields)
+            if mutation {self.log("探索 API：\(op) 已交给游戏执行，完成状态以地图刷新为准")}
+            return data
+        }
         bridge.onReady={ [weak self] port in
             guard let self else{return}
             let data=try? JSONSerialization.data(withJSONObject:["token":token,"port":Int(port)])

@@ -614,7 +614,109 @@
     }
   }
 
+  // Public exploration API: no arbitrary evaluation or direct protocol packets.
+  var exploreNodes={},exploreRevision=0,exploreAt=0;
+  function exploreAllowed(type){
+    var name=OutEventModel.inst.GetEventTypeName(type)||'';
+    if(/方尖碑|聚魂|神像/.test(name))return false;
+    return /采集|宝箱|传送石|怪群|污染/.test(name);
+  }
+  function exploreMap(m){
+    var wild=WildIdleModel.inst,model=OutEventModel.inst;
+    var area=Number(m.areaId)||wild.GetCurAreaId(),fields=wild.GetFieldIdsInArea(area);
+    if(!fields || !fields.length)throw Error('unknown_area');
+    var areas={},cfg=ConfigMgr.inst.GetCfg(configTable.field);
+    cfg.ForEach(function(f){if(!areas[f.area])areas[f.area]={areaId:f.area,name:L(f.area_name_show),unlocked:wild.CheckAreaIsUnlock(f.area)};});
+    var rows=fields.map(function(field){
+      var ins=wild.GetInsIdByFieldId(field),map=wild.GetMapIdByFieldId(field);
+      var events=model.GetOutEventCfgListByInsId(ins).map(function(c){
+        var info=model.GetSimpleEventInfo(ins,c.id),live=model.GetOutEventInfoByEventId(c.id),pos=null;
+        try {var p=model.GetOutEventPosByEventId(c.id);pos={x:p.x,y:p.y,z:p.z};}catch(e){}
+        return {eventId:c.id,type:c.type,typeName:model.GetEventTypeName(c.type),name:L(c.name||c.event_name||''),
+          counted:c.is_count===1,hidden:c.is_hidden===1,visible:model.CheckOutEventIsCanShowInMap(c,ins),
+          status:live ? live.status : info ? info.status : null,observed:!!(live||info),
+          done:!!info && info.status===types.outevent_status.got,allowed:exploreAllowed(c.type),position:pos};
+      });
+      var fog=null;
+      if(typeof WarFogMgr!=='undefined'){
+        var f=WarFogMgr.inst,known=f.hasInfoFields.has(field),origin=WildMapMgr.inst.MapId2MapPos(map,new Laya.Vector3());
+        fog={observed:known,allRevealed:known ? f.IsMapIdAllUnlock(map) : null,division:WarFogMgr.MAP_DIVISION,blockSize:WarFogMgr.BlockSize,
+          origin:{x:origin.x,z:origin.z},words:m.includeFog===true && known ? (f.fieldId2FogInfoList.get(field)||[]).slice() : null};
+      }
+      return {fieldId:field,insId:ins,mapId:map,name:wild.GetFieldNameByFieldId(field),unlocked:wild.CheckFieldIsUnlock(field),fog:fog,
+        progress:model.GetCurNormalProgress(ins),events:events};
+    });
+    var counts=model.GetAreaOutEventProgress(area,1);
+    return {version:1,at:Date.now(),location:locationSnapshot(),areaId:area,areas:Object.keys(areas).map(function(k){return areas[k];}),
+      progress:Object.keys(counts).map(function(k){return {type:Number(k),name:model.GetEventTypeName(Number(k)),done:counts[k][0],total:counts[k][1],allowed:exploreAllowed(Number(k))};}),
+      fields:rows,excluded:['方尖碑','聚魂匣'],following:model.GetFollowParams() ? model.GetFollowParams().GetUid() : null};
+  }
+  function exploreUI(){
+    exploreNodes={};exploreRevision++;exploreAt=Date.now();var rows=[],truncated=false;
+    function visit(n,parent,depth){
+      if(!n || n.destroyed || n.visible===false || depth>24)return;
+      if(rows.length>=1500){truncated=true;return;}
+      var id=String(rows.length+1),point=null;
+      try{var p=n.localToGlobal(new Laya.Point(0,0));point={x:p.x,y:p.y};}catch(e){}
+      var text=typeof n.text==='string' ? n.text.slice(0,500) : typeof n.label==='string' ? n.label.slice(0,500) : '';
+      rows.push({id:id,parent:parent,name:String(n.name||''),className:n.constructor ? n.constructor.name : '',text:text,
+        x:point ? point.x : null,y:point ? point.y : null,width:n.width||0,height:n.height||0,mouseEnabled:n.mouseEnabled===true,hasClick:typeof n.hasListener==='function' && n.hasListener(Laya.Event.CLICK),disabled:n.disabled===true});
+      exploreNodes[id]=n;
+      var children=n._children||[];for(var i=0;i<children.length;i++)visit(children[i],id,depth+1);
+    }
+    visit(Laya.stage,null,0);
+    return {version:1,revision:exploreRevision,at:exploreAt,width:Laya.stage.width,height:Laya.stage.height,truncated:truncated,nodes:rows};
+  }
+  function exploreDispatch(m){
+    if(m.op==='exploreMap')return exploreMap(m);
+    if(m.op==='exploreUI')return exploreUI();
+    if(m.op==='exploreRender'){
+      var stage=Laya.stage,w=Math.ceil(stage.width),h=Math.ceil(stage.height),data=null;
+      if(!(w>0&&h>0&&w*h<=5000000))throw Error('render_size_unsupported');
+      if(typeof stage.drawToCanvasForConch==='function')data=stage.drawToCanvasForConch(w,h,0,0,null,'jpg',65);
+      if(!data)throw Error('render_unavailable');
+      if(data.length>850000)throw Error('render_too_large');
+      return {at:Date.now(),width:w,height:h,dataURL:data};
+    }
+    if(assist.locked || targeting.locked)throw Error('account_locked');
+    if(m.op==='exploreStop'){OutEventSingleRouteModel.inst.QuitSingleOutEventRouting();OutEventRouteModel.inst.QuitOutEventRouting();OutEventModel.inst.StopWholeMapOutEventFollow();OutEventModel.inst.StopHideMapOutEventFollow();return dispatch({op:'stop'});}
+    requireHuntScene(WildIdleModel.inst.GetCurAreaId());
+    if(m.op==='exploreClick'){
+      if(m.revision!==exploreRevision || Date.now()-exploreAt>10000)throw Error('stale_ui_snapshot');
+      var n=exploreNodes[String(m.nodeId)];
+      if(!n || n.destroyed || !n.mouseEnabled || n.disabled || !n.parent)throw Error('node_not_clickable');
+      var parent=n;
+      while(parent){if(parent.visible===false || parent.destroyed)throw Error('node_not_visible');parent=parent.parent;}
+      var ev=new Laya.Event();ev.setTo(Laya.Event.CLICK,n,n);n.event(Laya.Event.CLICK,ev);
+      exploreNodes={};exploreRevision++;
+      return {requested:true,nodeId:String(m.nodeId)};
+    }
+    if(m.op==='exploreFollow'){
+      var model=OutEventModel.inst,c=ConfigMgr.inst.GetKey(configTable.outevent,Number(m.eventId));
+      if(!c || !exploreAllowed(c.type))throw Error('event_not_authorized');
+      var field=WildIdleModel.inst.GetFieldIdByInsId(c.ins_id);
+      if(!WildIdleModel.inst.CheckFieldIsUnlock(field))throw Error('field_locked');
+      var info=model.GetSimpleEventInfo(c.ins_id,c.id);
+      if(info && info.status===types.outevent_status.got)throw Error('event_already_done');
+      if(!model.CheckOutEventIsCanShowInMap(c,c.ins_id))throw Error('event_not_visible');
+      model.StopWholeMapOutEventFollow();model.StopHideMapOutEventFollow();
+      EventFollowMgr.inst.ShowEventFollowByOutEventId(c.id,false,true,true);
+      return {requested:true,eventId:c.id,completed:false};
+    }
+    if(m.op==='exploreMove'){
+      var x=Number(m.x),z=Number(m.z);
+      if(!isFinite(x)||!isFinite(z)||typeof m.x!=='number'||typeof m.z!=='number')throw Error('invalid_position');
+      if(!MapPathMgr.inst.CheckIsMapReachable(x,z))throw Error('position_unreachable');
+      var pos=new Laya.Vector3(x,0,z);
+      OutEventModel.inst.StopWholeMapOutEventFollow();OutEventModel.inst.StopHideMapOutEventFollow();
+      EventFollowMgr.inst.ShowEventFollowByParams({pos:pos,followType:0,isAutoGoTo:true});
+      return {requested:true,target:{x:x,z:z},completed:false};
+    }
+    throw Error('unsupported_operation');
+  }
+
   function dispatch(m) {
+    if(['exploreMap','exploreUI','exploreRender','exploreClick','exploreFollow','exploreMove','exploreStop'].indexOf(m.op)>=0)return exploreDispatch(m);
     if(['targetMode','targetTick','targetSelect'].indexOf(m.op)>=0)return targetDispatch(m);
     if(m.op==='assistStatus')return assistStatus();
     if(m.op==='assistRun')return assistRun(m);

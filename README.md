@@ -37,6 +37,7 @@
 | 弹窗处理 | 分别勾选断线、异地登录、挂机收益、空白关闭（含恭喜获得）等规则，未知弹窗仅记录 |
 | 红包 | 世界 / 联盟新红包立即尝试领取；资格、去重和安全锁检查保留，结果与金额以服务器确认为准 |
 | 事件记录 | 软件内查看全部事件、红包、弹窗历史、JSON 与 ESC 返回结果，数据保存在本机 |
+| 本机探索 API | 令牌鉴权的回环 WebSocket；区域与子地图、采集与宝箱进度、已观测迷雾、界面树与渲染图、原生单事件寻路、位置移动与按钮点击；[接口说明](docs/探索API.md) |
 | 软件更新 | 设置 → 关于与更新，检查正式版本、查看说明、一键下载、验签、安装并重开助手，失败回滚 |
 
 键盘功能共用一个开关。未知自定义回调不强制执行，未知弹窗不泛点。秘境试炼、突袭、突袭困难的自动导航不属于当前已完成能力。
@@ -75,6 +76,7 @@ node BossAssistant/Tests/keyboard-runtime.cjs
 node BossAssistant/Tests/assistance-runtime.cjs
 node BossAssistant/Tests/location-runtime.cjs
 node BossAssistant/Tests/targeting-runtime.cjs
+node BossAssistant/Tests/exploration-runtime.cjs
 swiftc BossAssistant/Sources/GameCachePolicy.swift BossAssistant/Tests/GameCachePolicyTests.swift -o /tmp/game-cache-tests
 /tmp/game-cache-tests BossAssistant/Resources
 zsh scripts/test-update.sh

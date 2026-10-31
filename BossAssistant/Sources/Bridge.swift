@@ -8,6 +8,9 @@ struct BridgeFailure: LocalizedError { let message:String; var errorDescription:
     private var game:NWConnection?
     private var connections:[UUID:NWConnection]=[:]
     private var authenticated:Set<UUID>=[]
+    private var controllers:Set<UUID>=[]
+    var externalRequest:((String,[String:Any]) async throws -> Data)?
+    private let externalOps:Set<String>=["exploreMap","exploreUI","exploreRender","exploreClick","exploreFollow","exploreMove","exploreStop","location","list"]
     private var pending:[Int:(Result<Data,Error>)->Void]=[:]
     private var sequence=0
     var onChange:((Bool)->Void)?
@@ -41,7 +44,7 @@ struct BridgeFailure: LocalizedError { let message:String; var errorDescription:
             switch state {
             case .ready:self.receive(c,id)
             case .failed,.cancelled:
-                self.connections[id]=nil;self.authenticated.remove(id)
+                self.connections[id]=nil;self.authenticated.remove(id);self.controllers.remove(id)
                 if self.game === c { self.game=nil;self.onChange?(false);self.failPending("游戏连接已断开") }
             default:break
             }
@@ -61,9 +64,27 @@ struct BridgeFailure: LocalizedError { let message:String; var errorDescription:
             if let data, !data.isEmpty {
                 guard let json=(try? JSONSerialization.jsonObject(with:data)) as? [String:Any] else {c.cancel();return}
                 if !self.authenticated.contains(id) {
-                    guard json["hello"] as? String == "yzlm-native-boss-v2",json["token"] as? String == self.token else {c.cancel();return}
-                    self.game?.cancel();self.authenticated.insert(id);self.game=c;self.onChange?(true)
-                } else if let rid=json["id"] as? Int,let callback=self.pending.removeValue(forKey:rid) {
+                    guard json["token"] as? String == self.token else {c.cancel();return}
+                    if json["hello"] as? String == "yzlm-controller-v1" {
+                        self.authenticated.insert(id);self.controllers.insert(id)
+                        self.reply(c,["hello":"yzlm-controller-v1","version":1,"connected":self.connected])
+                    } else if json["hello"] as? String == "yzlm-native-boss-v2" {
+                        self.game?.cancel();self.authenticated.insert(id);self.game=c;self.onChange?(true)
+                    } else {c.cancel();return}
+                } else if self.controllers.contains(id) {
+                    guard let rid=json["id"] as? Int,let op=json["op"] as? String,self.externalOps.contains(op) else {
+                        self.reply(c,["id":json["id"] ?? NSNull(),"error":"unsupported_operation"]);self.receive(c,id);return
+                    }
+                    Task { @MainActor in
+                        do {
+                            let data:Data
+                            if let handler=self.externalRequest {data=try await handler(op,json)}
+                            else {data=try await self.request(op,fields:json)}
+                            let value=try JSONSerialization.jsonObject(with:data)
+                            self.reply(c,["id":rid,"result":value])
+                        } catch {self.reply(c,["id":rid,"error":error.localizedDescription])}
+                    }
+                } else if self.game === c,let rid=json["id"] as? Int,let callback=self.pending.removeValue(forKey:rid) {
                     if let error=json["error"] as? String {callback(.failure(BridgeFailure(message:error)))}
                     else if let result=json["result"],let bytes=try? JSONSerialization.data(withJSONObject:result) {callback(.success(bytes))}
                     else {callback(.failure(BridgeFailure(message:"游戏返回的数据不完整")))}
@@ -72,6 +93,11 @@ struct BridgeFailure: LocalizedError { let message:String; var errorDescription:
             self.receive(c,id)
             }
         }
+    }
+    private func reply(_ c:NWConnection,_ value:[String:Any]) {
+        guard let data=try? JSONSerialization.data(withJSONObject:value) else{return}
+        let context=NWConnection.ContentContext(identifier:"controller-reply",metadata:[NWProtocolWebSocket.Metadata(opcode:.text)])
+        c.send(content:data,contentContext:context,isComplete:true,completion:.contentProcessed{_ in})
     }
     func request(_ op:String,fields:[String:Any]=[:]) async throws -> Data {
         guard let game else {throw BridgeFailure(message:"游戏尚未连接，请先注入脚本")}
