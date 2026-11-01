@@ -42,7 +42,7 @@ struct MainView:View {
                     if model.running {
                         Label(model.restartDescription,systemImage:model.scheduledRestartInProgress ? "arrow.triangle.2.circlepath" : "timer")
                             .font(.system(size:11,weight:.medium,design:.monospaced)).monospacedDigit().foregroundStyle(teal)
-                            .padding(9).background(teal.opacity(0.08),in:RoundedRectangle(cornerRadius:8)).help("自动攻略每2小时重启一次游戏")
+                            .padding(9).background(teal.opacity(0.08),in:RoundedRectangle(cornerRadius:8)).help("自动攻略每\(model.restartIntervalMinutes)分钟重启一次游戏，可在设置中修改")
                     }
                     Button{Task{await model.detect()}}label:{Image(systemName:"arrow.clockwise")}.disabled(!model.connected || model.snapshot == nil || model.working).accessibilityLabel("重新检测首领列表").help("重新检测首领列表")
                 }

@@ -15,6 +15,13 @@ import Foundation
         schedule.restarted(now:now);assert(schedule.remaining(now:now)==7200)
         schedule.start(now:now.addingTimeInterval(9000),savedDeadline:saved)
         assert(schedule.remaining(now:now.addingTimeInterval(9000))==0)
+        schedule.start(now:now,interval:60)
+        assert(schedule.remaining(now:now)==60)
+        assert(schedule.remaining(now:now.addingTimeInterval(60))==0)
+        schedule.restarted(now:now.addingTimeInterval(60))
+        assert(schedule.remaining(now:now.addingTimeInterval(60))==60)
+        schedule.start(now:now,interval:7200)
+        assert(schedule.remaining(now:now)==7200)
         print("PASS: two-hour deadline, countdown rounding, persisted deadline, retry and reset")
     }
 }

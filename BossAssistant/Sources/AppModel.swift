@@ -43,6 +43,18 @@ import CoreGraphics
     @Published var working=false
     @Published private var continuity=HuntContinuity()
     var running:Bool {continuity.requested}
+    @Published var restartIntervalMinutes:Int = {
+        let saved=UserDefaults.standard.integer(forKey:"restartIntervalMinutes")
+        return [1,5,15,30,60,120,240,360].contains(saved) ? saved : 120
+    }() {didSet{
+        guard oldValue != restartIntervalMinutes else{return}
+        UserDefaults.standard.set(restartIntervalMinutes,forKey:"restartIntervalMinutes")
+        if running {
+            restartSchedule.start(now:Date(),interval:TimeInterval(restartIntervalMinutes*60))
+            saveRestartDeadline();restartRemaining=restartSchedule.remaining(now:Date())
+        }
+        log("游戏定时重启间隔设为\(restartIntervalMinutes)分钟，重新开始计时")
+    }}
     @Published private(set) var restartRemaining=7200
     @Published private(set) var scheduledRestartInProgress=false
     private var restartTask:Task<Void,Never>?
@@ -776,7 +788,7 @@ import CoreGraphics
     private func startRestartSchedule(){
         restartTask?.cancel()
         let saved=UserDefaults.standard.object(forKey:"huntRestartDeadline") as? Date
-        restartSchedule.start(now:Date(),savedDeadline:saved)
+        restartSchedule.start(now:Date(),savedDeadline:saved,interval:TimeInterval(restartIntervalMinutes*60))
         saveRestartDeadline()
         restartRemaining=restartSchedule.remaining(now:Date())
         restartTask=Task { [weak self] in
@@ -785,7 +797,7 @@ import CoreGraphics
                 self.restartRemaining=self.restartSchedule.remaining(now:Date())
                 if self.restartRemaining==0 && !self.working && !self.recoveryLocked && !self.targetingEnabled && !self.continuity.movementHeld {
                     self.working=true;self.scheduledRestartInProgress=true
-                    await self.pauseHunt(.maintenance,text:"自动攻略已运行2小时，正在重启游戏；任务保留")
+                    await self.pauseHunt(.maintenance,text:"定时重启已到时，正在重启游戏；任务保留")
                     // Stop may have been pressed while suspendHunt was awaiting its reply.
                     if self.running && !Task.isCancelled {
                         do {
