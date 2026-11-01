@@ -313,5 +313,14 @@
     "live": "Complete2D tree816–823 nodes; focused Boss condition window30 nodes. Real MCP movement to spawn and return to entrance, stop confirmed.15-second watch30 samples,26 changed snapshots and26 progress notifications. Actual MCP button opened/closed Boss conditions. Live exclusion/completed-event/stale-snapshot/invalid-position checks pass, with no unintended displacement or auto change.",
     "limits": "Current2749x1920 render exceeds documented5MP cap and correctly errors; actual2561x1920 JPEG was verified in1.4.7, onlyUI/no3D. Native window screenshot verified. New-map collection/chest/teleport/Boss success and live nonempty enemies remain unverified before opening. Short southern test waypoint was nonwalkable and rejected; verified spawn route used instead. Stop confirmation waits actual state rather than immediate response.",
     "ci": "GitHub checks cancelled before steps; local checks passed, no CI success claimed."
+  },
+  "timed_restart_and_cards_1_4_9": {
+    "date": "2026-11-02",
+    "build": 36,
+    "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.4.9",
+    "deployment": "Installed official release through in-app one-click update from1.4.8. Version1.4.9/build36 and fixed-signature helper verify/deep strict verification pass. Installed executable SHA256 matches released build:0d84991c8ffd2c96c7b25df3a7cadf21eab89ab34223239ae4f337b6ceb73f7c.",
+    "live": "Four cards per row, short Roman map labels, lights and restart countdown verified in native screenshot. Open-game button kept existing game running. Restart-game button changed game PID60437 to61865, preserved hunt and selection, reset timer, reconnected and resumed hunt;5 cooldowns verified afterwards. Input monitoring retained.",
+    "local_tests": "Five Runtime suites, MCP tests, restart/recovery policy, update policy, game cache and boss selection tests pass. Fixed signer build and temporary installer rejection, rollback, replacement and tamper tests pass.",
+    "limits": "Full real2-hour scheduled cycle and1-hour account lock expiry not waited out; tested with deterministic policy times. No account conflict induced. Runtime unchanged; no reinjection needed. GitHub CI cancelled before completion; no CI success claimed."
   }
 }
