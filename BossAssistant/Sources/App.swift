@@ -23,6 +23,8 @@ struct MainView:View {
                 }}.padding(.horizontal,12)}
                 Divider().overlay(Color.white.opacity(0.05)).padding(.top,12)
                 VStack(alignment:.leading,spacing:14){
+                    Button{Task{await model.openGame()}} label:{Label("打开游戏",systemImage:"play.rectangle")}.disabled(model.working)
+                    Button{Task{await model.restartGame()}} label:{Label("重启游戏",systemImage:"arrow.clockwise")}.disabled(model.working)
                     Button{showInject=true} label:{Label(model.injected ? "重新注入脚本" : "注入脚本",systemImage:"puzzlepiece.extension")}.disabled(model.working)
                     Button{showRestore=true} label:{Label("还原原始脚本",systemImage:"arrow.uturn.backward")}.disabled(model.working || !model.injected)
                     Button{NearbyTargetPanel.present(model:model)} label:{Label("附近怪物 / 集火",systemImage:"scope")}
@@ -62,7 +64,7 @@ struct MainView:View {
                 if !model.connected {Text(model.cacheMessage).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)}
                 HStack(spacing:12){
                     Image(systemName:model.huntPaused ? "pause.circle" : model.running ? "waveform.path" : "checkmark.shield").foregroundStyle(teal)
-                    VStack(alignment:.leading,spacing:5){Text(model.message).font(.system(size:13,weight:.medium));Text(model.running ? "本次已核验 \(model.verified) 个 · 每3秒检测 · 异常60秒重试" : "在游戏内直接寻路 · 不占用鼠标和键盘").font(.caption).foregroundStyle(.secondary)}
+                    VStack(alignment:.leading,spacing:5){if model.running {Text(model.restartDescription).font(.caption).monospacedDigit().foregroundStyle(.orange)};Text(model.message).font(.system(size:13,weight:.medium));Text(model.running ? "本次已核验 \(model.verified) 个 · 每3秒检测 · 异常60秒重试" : "在游戏内直接寻路 · 不占用鼠标和键盘").font(.caption).foregroundStyle(.secondary)}
                     Spacer()
                     if model.running {
                         if model.huntPaused {Button{model.resumeHunt()}label:{Label("立即继续",systemImage:"play.fill").padding(.horizontal,8).padding(.vertical,8)}.buttonStyle(.borderedProminent).tint(teal).foregroundStyle(.black).disabled(!model.canResumeHunt).help("跳过60秒等待；确认回到攻略区域后继续，副本或加载期间保留任务。")}

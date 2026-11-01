@@ -56,6 +56,13 @@ def main():
     run("npm", "test", "--prefix", str(ROOT / "mcp"))
     for test in ["keyboard-runtime.cjs", "assistance-runtime.cjs", "location-runtime.cjs", "targeting-runtime.cjs", "exploration-runtime.cjs"]:
         run("node", str(APP / "Tests" / test))
+    with tempfile.TemporaryDirectory(prefix="boss-restart-tests-") as folder:
+        tests = str(Path(folder) / "hunt-restart-tests")
+        run("swiftc", str(APP / "Sources/HuntRestartSchedule.swift"), str(APP / "Tests/HuntRestartTests.swift"), "-o", tests)
+        run(tests)
+        recovery_tests = str(Path(folder) / "recovery-tests")
+        run("swiftc", str(APP / "Sources/RecoveryPolicy.swift"), str(APP / "Sources/PopupRecord.swift"), str(APP / "Sources/RedPacketLedger.swift"), str(APP / "Tests/RecoveryPolicyTests.swift"), "-o", recovery_tests)
+        run(recovery_tests)
     run("zsh", str(ROOT / "scripts/test-update.sh"))
     with tempfile.TemporaryDirectory(prefix="boss-cache-tests-") as folder:
         tests = str(Path(folder) / "game-cache-tests")

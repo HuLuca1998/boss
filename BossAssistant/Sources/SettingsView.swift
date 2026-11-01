@@ -32,7 +32,7 @@ struct SettingsView:View {
                         Text("弹窗处理").font(.headline)
                         Toggle("连接服务器失败：自动确认重连",isOn:$model.autoReconnect)
                         Toggle("异地登录：自动确认",isOn:$model.replacedConfirmEnabled)
-                        Text("60秒内第二次异地登录，暂停自动攻击与自动重连，需手动继续；关闭勾选不解除保护。").font(.caption).foregroundStyle(.secondary)
+                        Text("60秒内第二次异地登录，暂停自动攻击与自动重连，1小时后重试，也可手动解除；关闭勾选不解除保护。").font(.caption).foregroundStyle(.secondary)
                         if model.recoveryLocked {Button("手动恢复重连"){model.unlockRecovery()}}
                         Divider()
                         Toggle("挂机收益：自动领取",isOn:$model.idleRewardEnabled)

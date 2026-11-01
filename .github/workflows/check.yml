@@ -23,6 +23,10 @@ jobs:
           node BossAssistant/Tests/external-api.cjs /tmp/external-api-tests
           swiftc BossAssistant/Sources/BossSelection.swift BossAssistant/Tests/BossSelectionTests.swift -o /tmp/boss-selection-tests
           /tmp/boss-selection-tests BossAssistant/Resources
+          swiftc BossAssistant/Sources/HuntRestartSchedule.swift BossAssistant/Tests/HuntRestartTests.swift -o /tmp/hunt-restart-tests
+          /tmp/hunt-restart-tests
+          swiftc BossAssistant/Sources/RecoveryPolicy.swift BossAssistant/Sources/PopupRecord.swift BossAssistant/Sources/RedPacketLedger.swift BossAssistant/Tests/RecoveryPolicyTests.swift -o /tmp/recovery-tests
+          /tmp/recovery-tests
           zsh scripts/test-update.sh
           swiftc BossAssistant/Sources/GameCachePolicy.swift BossAssistant/Tests/GameCachePolicyTests.swift -o /tmp/game-cache-tests
           /tmp/game-cache-tests BossAssistant/Resources

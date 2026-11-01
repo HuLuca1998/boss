@@ -48,6 +48,10 @@ final class Injector {
         }
         throw BridgeFailure(message:"游戏仍在退出中，未改写缓存，请稍后重试")
     }
+    @MainActor func restartGame()async throws {
+        try await quitGame()
+        try await openGame()
+    }
     @MainActor func openGame()async throws {
         let cfg=NSWorkspace.OpenConfiguration();cfg.activates=false
         _ = try await NSWorkspace.shared.openApplication(at:URL(fileURLWithPath:"/Applications/game.app"),configuration:cfg)

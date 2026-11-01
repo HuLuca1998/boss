@@ -43,6 +43,15 @@ import CoreGraphics
     @Published var working=false
     @Published private var continuity=HuntContinuity()
     var running:Bool {continuity.requested}
+    @Published private(set) var restartRemaining=7200
+    @Published private(set) var scheduledRestartInProgress=false
+    private var restartTask:Task<Void,Never>?
+    private var restartSchedule=HuntRestartSchedule()
+    var restartDescription:String {
+        if scheduledRestartInProgress {return "正在重启游戏 · 保留攻略任务"}
+        if restartRemaining==0 {return "重启已到时 · 等待保护、维护或手动操作结束"}
+        return String(format:"游戏重启倒计时 %02d:%02d:%02d",restartRemaining/3600,(restartRemaining%3600)/60,restartRemaining%60)
+    }
     private var progress=HuntProgress()
     @Published var huntPaused=false
     private var huntArmed=false
@@ -183,6 +192,7 @@ import CoreGraphics
         assistTask=Task { [weak self] in
             while !Task.isCancelled {
                 guard let self else{return}
+                self.updateRecoveryDeadline()
                 if self.connected && !self.working {await self.pollAssistance()}
                 try? await Task.sleep(nanoseconds:500_000_000)
             }
@@ -315,7 +325,7 @@ import CoreGraphics
                 recordReplacement(token:dialog.token,time:Date().timeIntervalSince1970,source:"异地登录提示")
             }
             saveRecoveryPolicy()
-            if !wasLocked && recoveryLocked {log("60秒内第2次异地登录：暂停自动攻击与自动重连，等待手动继续",category:"账号保护",data:["时间窗口":"60秒","触发阈值":"2次","自动攻击":"暂停","自动重连":"暂停","恢复方式":"手动继续"])}
+            if !wasLocked && recoveryLocked {log("60秒内第2次异地登录：暂停自动攻击与自动重连，1小时后重试登录",category:"账号保护",data:["时间窗口":"60秒","触发阈值":"2次","自动攻击":"暂停","自动重连":"暂停","恢复方式":"1小时后自动重试，或手动解除"])}
             var fields:[String:Any]=["locked":recoveryLocked,"redPackets":redPacketEnabled,"fastRedPackets":true,"idleReward":idleRewardEnabled && (!popupOnlyWhileHunting || running),"blankClose":blankCloseEnabled && (!popupOnlyWhileHunting || running),"areaBossBox":areaBossBoxEnabled && running && !huntPaused,"huntArea":continuity.area ?? 0,"avoidNoKeyBoss":running && continuity.reason != .manual && continuity.reason != .away]
             if let session=status.popupSession {fields["popupAck"]=popupAcks[session] ?? 0}
             if !recoveryLocked,let dialog=status.dialog,dialog.canConfirm,((dialog.kind=="network" && autoReconnect) || (dialog.kind=="replaced" && replacedConfirmEnabled)){fields["confirmToken"]=dialog.token}
@@ -357,6 +367,18 @@ import CoreGraphics
             } else {assistMessage=recoveryLocked ? "异地登录保护保持，等待手动继续" : "连接恢复与红包监控等待游戏响应"}
         }
     }
+    @Published private(set) var recoveryRemaining=0
+    private func updateRecoveryDeadline(){
+        guard recoveryLocked else{recoveryRemaining=0;return}
+        let previous=recoveryPolicy.retryAt
+        let resumed=recoveryPolicy.retryIfDue(now:Date().timeIntervalSince1970)
+        recoveryRemaining=recoveryPolicy.remaining(now:Date().timeIntervalSince1970)
+        if resumed || previous != recoveryPolicy.retryAt {saveRecoveryPolicy()}
+        if resumed {
+            assistMessage="账号保护已满1小时，正在重试登录"
+            log(assistMessage);recoveryWait?.cancel()
+        }
+    }
     func unlockRecovery(){
         recoveryPolicy.unlock();saveRecoveryPolicy()
         assistMessage="已手动解除异地登录保护，正在重新检测"
@@ -371,7 +393,8 @@ import CoreGraphics
         return keyboardActive ? "方向键 / WASD / ESC 已开启" : "键盘控制等待游戏就绪"
     }
     var assistanceDescription:String {
-        connected ? assistMessage : (recoveryLocked ? "账号保护中 · 自动重连、红包领取与攻击已暂停 · 等待游戏连接" : "游戏未连接 · 自动重连、红包与弹窗处理等待连接")
+        if recoveryLocked {return String(format:"账号保护中 · %02d:%02d:%02d 后重试登录",recoveryRemaining/3600,(recoveryRemaining%3600)/60,recoveryRemaining%60)}
+        return connected ? assistMessage : "游戏未连接 · 自动重连、红包与弹窗处理等待连接"
     }
     var hasFreshSnapshot:Bool {connected && lastDetected.map{Date().timeIntervalSince($0)<10} == true}
     var unfilteredRows:[Boss] {
@@ -567,6 +590,7 @@ import CoreGraphics
         recoveryWait=nil
     }
     func prepareForExit()async {
+        restartTask?.cancel()
         targetTask?.cancel()
         if connected {_ = try? await bridge.request("targetMode",fields:["enabled":false])}
         assistTask?.cancel()
@@ -588,7 +612,7 @@ import CoreGraphics
                 await waitForRecovery();continue
             }
             if recoveryLocked {
-                await pauseHunt(.account,text:"异地登录频繁 · 任务保留，需手动立即继续")
+                await pauseHunt(.account,text:"异地登录频繁 · 任务保留，保护1小时后重试登录")
                 await waitForRecovery();continue
             }
             try await readSnapshot();try Task.checkCancellation()
@@ -647,6 +671,7 @@ import CoreGraphics
         guard !running,area>0 else{return}
         UserDefaults.standard.set(area,forKey:"continuousHuntArea")
         generation+=1;let run=generation;continuity.start(area:area);huntPaused=false;huntArmed=false;stopPending=false;verified=0;currentTarget=nil
+        startRestartSchedule()
         startBackgroundActivity()
         message="自动攻略中";log("启动持续巡检：每3秒检测，异常60秒重试，仅手动停止结束任务")
         huntTask=Task { [weak self] in
@@ -730,7 +755,59 @@ import CoreGraphics
             }
         }
     }
+    func openGame()async {
+        guard !working else{return}
+        working=true;defer{working=false}
+        do {try await injector.openGame();log("已请求打开游戏，等待连接")}
+        catch {errorText="打开游戏失败：\(error.localizedDescription)"}
+    }
+    func restartGame()async {
+        guard !working else{return}
+        working=true;scheduledRestartInProgress=true
+        defer{working=false;scheduledRestartInProgress=false}
+        if running {await pauseHunt(.maintenance,text:"正在手动重启游戏，攻略任务保留")}
+        do {
+            try await injector.restartGame()
+            if running {restartSchedule.restarted(now:Date());saveRestartDeadline();restartRemaining=restartSchedule.remaining(now:Date())}
+            log("手动重启游戏完成，等待连接与角色恢复")
+        } catch {errorText="重启游戏失败：\(error.localizedDescription)"}
+    }
+    private func startRestartSchedule(){
+        restartTask?.cancel()
+        let saved=UserDefaults.standard.object(forKey:"huntRestartDeadline") as? Date
+        restartSchedule.start(now:Date(),savedDeadline:saved)
+        saveRestartDeadline()
+        restartRemaining=restartSchedule.remaining(now:Date())
+        restartTask=Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self,self.running else{return}
+                self.restartRemaining=self.restartSchedule.remaining(now:Date())
+                if self.restartRemaining==0 && !self.working && !self.recoveryLocked && !self.targetingEnabled && !self.continuity.movementHeld {
+                    self.working=true;self.scheduledRestartInProgress=true
+                    await self.pauseHunt(.maintenance,text:"自动攻略已运行2小时，正在重启游戏；任务保留")
+                    // Stop may have been pressed while suspendHunt was awaiting its reply.
+                    if self.running && !Task.isCancelled {
+                        do {
+                            try await self.injector.restartGame()
+                            self.restartSchedule.restarted(now:Date())
+                            self.log("定时重启游戏完成，等待连接与角色恢复后继续攻略")
+                        } catch {
+                            self.restartSchedule.failed(now:Date())
+                            self.log("定时重启失败，60秒后重试：\(error.localizedDescription)")
+                        }
+                        if self.running {self.saveRestartDeadline()}
+                    }
+                    self.scheduledRestartInProgress=false;self.working=false
+                    self.restartRemaining=self.restartSchedule.remaining(now:Date())
+                }
+                do {try await Task.sleep(nanoseconds:1_000_000_000)} catch {return}
+            }
+        }
+    }
+    private func saveRestartDeadline(){UserDefaults.standard.set(restartSchedule.deadline,forKey:"huntRestartDeadline")}
     func stopAttack()async {
+        if !scheduledRestartInProgress {restartTask?.cancel();restartTask=nil}
+        UserDefaults.standard.removeObject(forKey:"huntRestartDeadline")
         savedHuntArea=nil;UserDefaults.standard.removeObject(forKey:"continuousHuntArea")
         selectionStopPending=false;currentHuntBoss=nil
         generation+=1;continuity.stop();huntPaused=false;huntArmed=false;huntTask?.cancel();huntTask=nil;currentTarget=nil
