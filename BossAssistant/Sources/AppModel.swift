@@ -67,6 +67,7 @@ import CoreGraphics
     }()
     private var bossDrops:[String:BossDropInfo]=[:]
     @Published private(set) var equipmentParts:[EquipmentPart]=[]
+    func isCurrentTarget(_ boss:Boss)->Bool {isCurrentArea && currentTarget != nil && currentHuntBoss?.id==boss.id}
     private var currentHuntBoss:Boss?
     private var selectionStopPending=false
     private var selectionStopBusy=false
