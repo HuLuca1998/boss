@@ -322,5 +322,15 @@
     "live": "Four cards per row, short Roman map labels, lights and restart countdown verified in native screenshot. Open-game button kept existing game running. Restart-game button changed game PID60437 to61865, preserved hunt and selection, reset timer, reconnected and resumed hunt;5 cooldowns verified afterwards. Input monitoring retained.",
     "local_tests": "Five Runtime suites, MCP tests, restart/recovery policy, update policy, game cache and boss selection tests pass. Fixed signer build and temporary installer rejection, rollback, replacement and tamper tests pass.",
     "limits": "Full real2-hour scheduled cycle and1-hour account lock expiry not waited out; tested with deterministic policy times. No account conflict induced. Runtime unchanged; no reinjection needed. GitHub CI cancelled before completion; no CI success claimed."
+  },
+  "compact_cards_and_interval_1_5_0": {
+    "date": "2026-11-02",
+    "build": 37,
+    "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.5.0",
+    "deployment": "Installed official release through in-app one-click update from1.4.9 after retrying stale release list. Fixed signer/version helper verify and deep strict codesign verification pass. Installed executable SHA256 matches released build29375f448be4e9430ae77e4f9581e62b6760b41691f0387a4cfd479313a8deab.",
+    "layout": "Native screenshot confirms4 columns, compact2-line cards, all17 current-region cards across5 rows visible without scrolling, with space for20. Roman submap labels, cooldown, drops/levels, selection, lights and key count visible. Catalog currently has at most17 bosses per region; >20 pagination not live exercised.",
+    "live_restart": "Set1-minute interval through Settings, start hunt: countdown00:01:00 then00:00:17 observed. At02:44:05 scheduled restart completed and game PID changed61865 to62872. Reconnected02:44:07, preserved task/17 selections/5 verified bosses. Set back to120 minutes at02:44:30; native countdown01:59:53 observed. Automatic hunt resumed02:45:15 and verified2 more cooldowns. Test stopped at02:45:32 to restore pre-test stopped state. Actual game state confirms no follow and auto=false. Persisted restartIntervalMinutes=120 verified.",
+    "local_tests": "MCP and5 Runtime suites, restart interval/deadline policy, recovery policy including1-hour expiry/migration, cache/selection/update policies passed. Signed native build and temporary installer rejection/rollback/replacement/tamper tests passed.",
+    "limits": "Real scheduled restart verified at1 minute through same code path; full2-hour elapsed run and long-term performance improvement not waited out. One-hour account protection is policy-tested; no live account conflict induced. Runtime unchanged; no reinjection needed."
   }
 }
