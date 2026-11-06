@@ -338,6 +338,11 @@
     "build": 38,
     "fix": "Locate com.yzlm.game using running application or Launch Services; read direct, Contents and Wrapper metadata without assuming game.app name.",
     "tests": "Renamed paths with spaces, binary plist in all three layouts, unsupported actual version with path, wrong bundle ID, missing app; fixed signer build and updater rollback/tamper suite passed.",
-    "scope": "Current Mac game 1.16.3 /Applications/game.app. Reported second Mac path /Applications/勇者联盟.app; second Mac version not provided; no live second-device verification."
+    "scope": "Current Mac game 1.16.3 /Applications/game.app. Reported second Mac path /Applications/勇者联盟.app; second Mac version not provided; no live second-device verification.",
+    "official_release": "https://github.com/HuLuca1998/boss/releases/tag/v1.5.1",
+    "archive_sha256": "35dfc1fb79f6ffa3609113012331c4c5694999f9d8f1084e633aa64da87e108d",
+    "live_update": "Updated /Applications/首领助手.app from 1.5.0 through Check Updates and One-click Update using official GitHub assets. Retried check after publication until visible. Installed 1.5.1 build 38; deep strict codesign and fixed signer updater verify passed.",
+    "live_injection": "New installation lookup passed live reinjection and game reopen; Main-dda2f connected, 17 selections restored, keyboard permission retained. Existing account protection remained active, so combat and role-ready data were not exercised.",
+    "github_ci": "Both push workflows cancelled before steps: runner configuration macos-14-arm64-us-default is not supported. Full release test suite passed locally; no CI success claimed."
   }
 }
