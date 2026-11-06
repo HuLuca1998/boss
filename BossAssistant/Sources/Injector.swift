@@ -54,7 +54,14 @@ final class Injector {
     }
     @MainActor func openGame()async throws {
         let cfg=NSWorkspace.OpenConfiguration();cfg.activates=false
-        _ = try await NSWorkspace.shared.openApplication(at:URL(fileURLWithPath:"/Applications/game.app"),configuration:cfg)
+        _ = try await NSWorkspace.shared.openApplication(at:gameURL(),configuration:cfg)
+    }
+    @MainActor private func gameURL()throws->URL {
+        if let url=NSRunningApplication.runningApplications(withBundleIdentifier:GameInstallation.bundleID).first?.bundleURL {return url}
+        if let url=NSWorkspace.shared.urlForApplication(withBundleIdentifier:GameInstallation.bundleID) {return url}
+        let legacy=URL(fileURLWithPath:"/Applications/game.app")
+        if FileManager.default.fileExists(atPath:legacy.path){return legacy}
+        throw GameCacheFailure(message:"未找到勇者联盟，请先正常打开游戏后重试；未进行注入")
     }
     @MainActor private func replace(selection:GameCacheSelection,before:Data,after:Data,original:Data)async throws {
         let fm=FileManager.default
@@ -92,8 +99,7 @@ final class Injector {
         }
     }
     @MainActor func inject(port:UInt16,token:String)async throws {
-        let infoURL=URL(fileURLWithPath:"/Applications/game.app/Wrapper/game.app/Info.plist")
-        guard let info=NSDictionary(contentsOf:infoURL),let version=info["CFBundleShortVersionString"] as? String,version=="1.16.3" else{throw BridgeFailure(message:"当前游戏安装版本尚未适配，未进行注入")}
+        try GameInstallation.validate(at:gameURL())
         try await authorizeCache()
         let selection=try GameCachePolicy.resolve(base:cache),original=try original(selection)
         let source=try GameCachePolicy.source(original:original,profile:selection.profile)

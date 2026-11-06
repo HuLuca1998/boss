@@ -66,7 +66,7 @@ def main():
     run("zsh", str(ROOT / "scripts/test-update.sh"))
     with tempfile.TemporaryDirectory(prefix="boss-cache-tests-") as folder:
         tests = str(Path(folder) / "game-cache-tests")
-        run("swiftc", str(APP / "Sources/GameCachePolicy.swift"), str(APP / "Tests/GameCachePolicyTests.swift"), "-o", tests)
+        run("swiftc", str(APP / "Sources/GameCachePolicy.swift"), str(APP / "Sources/GameInstallation.swift"), str(APP / "Tests/GameCachePolicyTests.swift"), "-o", tests)
         run(tests, str(APP / "Resources"))
         selection_tests = str(Path(folder) / "boss-selection-tests")
         run("swiftc", str(APP / "Sources/BossSelection.swift"), str(APP / "Tests/BossSelectionTests.swift"), "-o", selection_tests)

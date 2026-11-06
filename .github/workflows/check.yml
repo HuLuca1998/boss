@@ -28,6 +28,6 @@ jobs:
           swiftc BossAssistant/Sources/RecoveryPolicy.swift BossAssistant/Sources/PopupRecord.swift BossAssistant/Sources/RedPacketLedger.swift BossAssistant/Tests/RecoveryPolicyTests.swift -o /tmp/recovery-tests
           /tmp/recovery-tests
           zsh scripts/test-update.sh
-          swiftc BossAssistant/Sources/GameCachePolicy.swift BossAssistant/Tests/GameCachePolicyTests.swift -o /tmp/game-cache-tests
+          swiftc BossAssistant/Sources/GameCachePolicy.swift BossAssistant/Sources/GameInstallation.swift BossAssistant/Tests/GameCachePolicyTests.swift -o /tmp/game-cache-tests
           /tmp/game-cache-tests BossAssistant/Resources
           swiftc -swift-version 5 BossAssistant/Sources/UpdatePolicy.swift BossAssistant/Updater/main.swift -o /tmp/BossAssistantUpdater -framework AppKit -framework Security

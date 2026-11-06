@@ -332,5 +332,12 @@
     "live_restart": "Set1-minute interval through Settings, start hunt: countdown00:01:00 then00:00:17 observed. At02:44:05 scheduled restart completed and game PID changed61865 to62872. Reconnected02:44:07, preserved task/17 selections/5 verified bosses. Set back to120 minutes at02:44:30; native countdown01:59:53 observed. Automatic hunt resumed02:45:15 and verified2 more cooldowns. Test stopped at02:45:32 to restore pre-test stopped state. Actual game state confirms no follow and auto=false. Persisted restartIntervalMinutes=120 verified.",
     "local_tests": "MCP and5 Runtime suites, restart interval/deadline policy, recovery policy including1-hour expiry/migration, cache/selection/update policies passed. Signed native build and temporary installer rejection/rollback/replacement/tamper tests passed.",
     "limits": "Real scheduled restart verified at1 minute through same code path; full2-hour elapsed run and long-term performance improvement not waited out. One-hour account protection is policy-tested; no live account conflict induced. Runtime unchanged; no reinjection needed."
+  },
+  "installation_path_1_5_1": {
+    "version": "1.5.1",
+    "build": 38,
+    "fix": "Locate com.yzlm.game using running application or Launch Services; read direct, Contents and Wrapper metadata without assuming game.app name.",
+    "tests": "Renamed paths with spaces, binary plist in all three layouts, unsupported actual version with path, wrong bundle ID, missing app; fixed signer build and updater rollback/tamper suite passed.",
+    "scope": "Current Mac game 1.16.3 /Applications/game.app. Reported second Mac path /Applications/勇者联盟.app; second Mac version not provided; no live second-device verification."
   }
 }

@@ -21,6 +21,22 @@ import Foundation
         let fm=FileManager.default
         let base=fm.temporaryDirectory.appendingPathComponent("game-cache-tests-"+UUID().uuidString).resolvingSymlinksInPath()
         try fm.createDirectory(at:base,withIntermediateDirectories:true);defer{try? fm.removeItem(at:base)}
+        for layout in ["Info.plist","Contents/Info.plist","Wrapper/renamed.app/Info.plist"] {
+            let app=base.appendingPathComponent(UUID().uuidString+" 勇者联盟.app")
+            let plist=app.appendingPathComponent(layout)
+            try fm.createDirectory(at:plist.deletingLastPathComponent(),withIntermediateDirectories:true)
+            func writeInfo(_ id:String,_ version:String)throws {
+                try PropertyListSerialization.data(fromPropertyList:["CFBundleIdentifier":id,"CFBundleShortVersionString":version],format:.binary,options:0).write(to:plist)
+            }
+            try writeInfo(GameInstallation.bundleID,"1.16.3")
+            try GameInstallation.validate(at:app)
+            try writeInfo(GameInstallation.bundleID,"1.17.0")
+            do {try GameInstallation.validate(at:app);fatalError("Unsupported installation accepted")}
+            catch {assert(error.localizedDescription.contains("1.17.0"));assert(error.localizedDescription.contains(app.path))}
+            try writeInfo("unrelated.game","1.16.3")
+            reject{try GameInstallation.validate(at:app)}
+        }
+        reject{try GameInstallation.validate(at:base.appendingPathComponent("missing.app"))}
         let root=String(repeating:"a",count:40),js=String(repeating:"b",count:40)
         func put(_ id:String,_ data:Data)throws {
             let url=try GameCachePolicy.objectURL(id,base:base)
