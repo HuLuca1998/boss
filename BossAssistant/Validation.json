@@ -350,7 +350,12 @@
     "build": 39,
     "change": "Configurable 0–300ms release grace (default80ms, step10ms), sampled last-pressed opposing-direction priority, authoritative native movement keys.",
     "tests": "Full Swift application compiled successfully without installation/signing; movement policy and five Runtime suites, MCP protocol suite, update policy and three-profile game cache tests passed.",
-    "deployment": "Pending Actions signed release. User authorized migration after original signing Mac was lost. Encrypted identity committed with password in GitHub Secret; temporary import, pinned identity match and keychain cleanup passed. Full signed release and installation remain pending.",
-    "limits": "No live game change-of-direction or UI update verification this run. Sample period40ms; ordering of presses inside a single sample is not observable."
+    "deployment": "Official v1.5.2/build39 published from GitHub Actions and installed from its downloaded stable ZIP at /Applications/首领助手.app. Manual migration required because original signing Mac/private key is unavailable; old signed app backed up. Archive SHA256, pinned new signer, installed version and deep strict signature verified.",
+    "limits": "No live game change-of-direction or UI update verification this run. Sample period40ms; ordering of presses inside a single sample is not observable.",
+    "archive_sha256": "65feca7722cff6cda261d4849f1738ce0069caf7e3657e59efecf9e354bf4707",
+    "signing_fingerprint": "3BCD9B3147AFC251112023155B19C6F396AFE4C0",
+    "ci": "Checks succeeded. Release run42959924413 completed tests, signed build, installer rejection/rollback/replacement/tamper tests and public release, then failed during trust cleanup. Follow-up prepare-only run42960323317 succeeded with robust keychain cleanup; did not replace public assets.",
+    "signing_storage": "Encrypted PKCS12 bundle in repository, random high-entropy password in BOSS_SIGNING_PASSWORD Actions Secret only. Temporary generation keys/password removed. Import/pinned identity smoke test and wrong-password/no-secret-output test passed. Temporary keychain removed even when public certificate admin trust removal times out; hosted runner is discarded afterwards.",
+    "live": "AX UI confirmed release-delay stepper at80ms in Settings. Input Monitoring is not authorized under the new signature. Subsequent UI operations blocked by ScreenCaptureKit -3811. Read-only API check reports game not connected; reinjection, input permission and live movement validation pending user action."
   }
 }

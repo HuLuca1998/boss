@@ -7,7 +7,7 @@
 
 密码仅写入本仓库 GitHub Actions Secret `BOSS_SIGNING_PASSWORD`，不会随 Git 克隆。发布流程 `release.yml` 仅允许 main 的手动运行；PR 检查不导入签名。任何能更改发布工作流且触发运行的维护者，都应被视为拥有签名权限。
 
-`with-signing.py` 从环境取得密码（不打印、不传递给构建子进程），验证固定指纹后执行发布，在 finally 中删除临时钥匙串、解密包并恢复原钥匙串列表。不要将密码放在 YAML、命令参数、日志、Release 或普通 Actions artifact 中。仓库明文私钥忽略规则继续保留。
+`with-signing.py` 从环境取得密码（不打印、不传递给构建子进程），验证固定指纹后执行发布，在 finally 中删除临时钥匙串、解密包并恢复原钥匙串列表。托管 runner 使用管理员证书信任设置；若移除公开证书的信任记录超时，仍继续删除私钥钥匙串，剩余公开信任记录随一次性 runner 销毁。不要将密码放在 YAML、命令参数、日志、Release 或普通 Actions artifact 中。仓库明文私钥忽略规则继续保留。
 
 这是固定自签名身份，不是 Apple Developer ID，不提供公证。新身份为用户明确授权的1.5.2迁移；旧版更新器拒绝新证书，首次必须手动安装 GitHub 正式发布包。之后所有授权 Actions 环境共用这一身份。
 
