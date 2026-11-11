@@ -45,6 +45,7 @@
     if(!Number.isFinite(code) || code<37 || code>40 || !keyboard.enabled)return;
     keyboard.eventCount++;keyboard.lastEvent={code:code,down:down,time:Date.now()};
     if(typingText()){clearArrowKeys();return;}
+    if(keyboard.lastNativeAt)return;
     if(down)keyboard.pressed[code]=true;else delete keyboard.pressed[code];
     if(e.nativeEvent && e.nativeEvent.preventDefault)e.nativeEvent.preventDefault();
   }
@@ -57,10 +58,16 @@
     Laya.stage.on(Laya.Event.BLUR,keyboard,clearArrowKeys);
     if(typeof window!=='undefined' && window.addEventListener)window.addEventListener('blur',clearArrowKeys);
     Laya.InputManager.hasKeyDown=function(code){
-      if(keyboard.lastNativeAt && Date.now()-keyboard.lastNativeAt>900)clearArrowKeys();
-      if(keyboard.enabled && !typingText()) {
-        var arrow={87:38,83:40,65:37,68:39}[code];
-        if(arrow && keyboard.pressed[arrow])return true;
+      var arrow={87:38,83:40,65:37,68:39}[code];
+      if(keyboard.enabled && arrow) {
+        if(typingText()){clearArrowKeys();return false;}
+        if(keyboard.lastNativeAt) {
+          if(Date.now()-keyboard.lastNativeAt>900)clearArrowKeys();
+          // The native stream has already resolved opposing keys and release delay.
+          // Do not merge raw engine keys back into that resolved direction.
+          return !!keyboard.pressed[arrow];
+        }
+        if(keyboard.pressed[arrow])return true;
       }
       return originalHasKeyDown.apply(this,arguments);
     };

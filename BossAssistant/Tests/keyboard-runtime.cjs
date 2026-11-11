@@ -48,3 +48,13 @@ bag.tabSubView.OncloseBtnClick=CommonTab2SubView.prototype.OncloseBtnClick;
 open.set(1005,{viewVo:{id:1005,name:'NotifyMsgView'},gameObject:{visible:true},Layer:()=> 'HighLayer'});
 sendKeys([27]);assert.equal(returned,4,'passive game message layer must not block backpack return');sendKeys([]);
 console.log('PASS: passive message layer ignored without ignoring unknown modal');
+
+// Native resolved directions must override raw keys, including expiry and typing.
+command(true);sendKeys([39]);nativeKeys.add(65);nativeKeys.add(68);
+assert.equal(has(65),false);assert.equal(has(68),true);
+key(37,true);assert.equal(has(65),false,'engine arrow events cannot corrupt native winner');
+chat=true;assert.equal(has(68),false);chat=false;assert.equal(has(68),false,'typing clears held direction');
+sendKeys([39]);context.Date={now:()=>Date.now()+1500};assert.equal(has(65)||has(68),false,'expiry cannot revive raw WASD');context.Date=Date;
+sendKeys([]);assert.equal(has(65)||has(68),false,'release cannot revive raw WASD');
+command(false);assert.equal(has(65),true,'disabled mode restores original engine');nativeKeys.clear();
+console.log('PASS: native direction authority, raw opposite keys, typing and expiry');

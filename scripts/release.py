@@ -57,6 +57,9 @@ def main():
     for test in ["keyboard-runtime.cjs", "assistance-runtime.cjs", "location-runtime.cjs", "targeting-runtime.cjs", "exploration-runtime.cjs"]:
         run("node", str(APP / "Tests" / test))
     with tempfile.TemporaryDirectory(prefix="boss-restart-tests-") as folder:
+        movement_tests = str(Path(folder) / "movement-input-tests")
+        run("swiftc", str(APP / "Sources/MovementInput.swift"), str(APP / "Tests/MovementInputTests.swift"), "-o", movement_tests)
+        run(movement_tests)
         tests = str(Path(folder) / "hunt-restart-tests")
         run("swiftc", str(APP / "Sources/HuntRestartSchedule.swift"), str(APP / "Tests/HuntRestartTests.swift"), "-o", tests)
         run(tests)

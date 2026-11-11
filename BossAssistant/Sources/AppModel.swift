@@ -87,6 +87,12 @@ import CoreGraphics
     @Published var verified=0
     @Published var injected=false
     @Published private(set) var cacheMessage="正在识别游戏版本…"
+    @Published var keyboardReleaseDelay=MovementContinuity.delay(UserDefaults.standard.object(forKey:"keyboardReleaseDelay") as? Int ?? 80) {
+        didSet {
+            UserDefaults.standard.set(MovementContinuity.delay(keyboardReleaseDelay),forKey:"keyboardReleaseDelay")
+            keyboardController?.releaseDelayMilliseconds=MovementContinuity.delay(keyboardReleaseDelay)
+        }
+    }
     @Published var keyboardEnabled=false
     @Published private var keyboardActive=false
     @Published var keyboardWorking=false
@@ -201,6 +207,7 @@ import CoreGraphics
         let preferred=UInt16(saved?["port"] as? Int ?? 56783)
         do{try bridge.start(port:preferred)}catch{message="本地服务启动失败";errorText=error.localizedDescription}
         keyboardController=KeyboardController{[weak self] keys in self?.queueKeyboard(keys)}
+        keyboardController?.releaseDelayMilliseconds=keyboardReleaseDelay
         keyboardController?.onAccessChange={ [weak self] allowed in self?.keyboardInputAllowed=allowed }
         assistTask=Task { [weak self] in
             while !Task.isCancelled {

@@ -344,5 +344,13 @@
     "live_update": "Updated /Applications/首领助手.app from 1.5.0 through Check Updates and One-click Update using official GitHub assets. Retried check after publication until visible. Installed 1.5.1 build 38; deep strict codesign and fixed signer updater verify passed.",
     "live_injection": "New installation lookup passed live reinjection and game reopen; Main-dda2f connected, 17 selections restored, keyboard permission retained. Existing account protection remained active, so combat and role-ready data were not exercised.",
     "github_ci": "Both push workflows cancelled before steps: runner configuration macos-14-arm64-us-default is not supported. Full release test suite passed locally; no CI success claimed."
+  },
+  "keyboard_release_delay_1_5_2": {
+    "date": "2026-11-11",
+    "build": 39,
+    "change": "Configurable 0–300ms release grace (default80ms, step10ms), sampled last-pressed opposing-direction priority, authoritative native movement keys.",
+    "tests": "Full Swift application compiled successfully without installation/signing; movement policy and five Runtime suites, MCP protocol suite, update policy and three-profile game cache tests passed.",
+    "deployment": "NOT RELEASED OR INSTALLED. Official build refused because fixed signing identity B6D3E9976B2192AAB7A6AE143C3A9012D7C101DA is unavailable. Restore original certificate/private key before signed installer tests, release, in-app update, reinjection and connection verification.",
+    "limits": "No live game change-of-direction or UI update verification this run. Sample period40ms; ordering of presses inside a single sample is not observable."
   }
 }

@@ -3,7 +3,9 @@ import CoreGraphics
 
 // Poll movement keys while the game is frontmost; no event tap or global interception.
 @MainActor final class KeyboardController {
-    var enabled=false
+    var enabled=false {didSet{if !enabled {continuity.reset()}}}
+    var releaseDelayMilliseconds=80
+    private var continuity=MovementContinuity()
     private var timer:Timer?
     private var lastKeys:[Int]=[]
     private var lastSent=Date.distantPast
@@ -18,10 +20,12 @@ import CoreGraphics
         }
     }
     private func tick() {
-        let active=enabled && NSWorkspace.shared.frontmostApplication?.bundleIdentifier=="com.yzlm.game"
-        let keys=MovementInput.keys(enabled:enabled,frontmostBundle:NSWorkspace.shared.frontmostApplication?.bundleIdentifier){ native in
+        let frontmostBundle=NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        let active=enabled && frontmostBundle=="com.yzlm.game"
+        let rawKeys=MovementInput.keys(enabled:enabled,frontmostBundle:frontmostBundle){ native in
             CGEventSource.keyState(.combinedSessionState,key:CGKeyCode(native))
         }
+        let keys=continuity.update(keys:rawKeys,active:active,now:ProcessInfo.processInfo.systemUptime,delayMilliseconds:releaseDelayMilliseconds)
         if Date().timeIntervalSince(lastAccessCheck)>1 {
             lastAccessCheck=Date();onAccessChange?(CGPreflightListenEventAccess())
         }
