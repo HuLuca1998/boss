@@ -76,6 +76,7 @@ def main():
         run(selection_tests, str(APP / "Resources"))
     env = dict(os.environ, APP_OUT=str(output), APP_VERSION=version)
     run("zsh", str(APP / "build.sh"), env=env)
+    run("zsh", str(ROOT / "scripts/test-update.sh"), "--installer", env=env)
     bundle = output / "首领助手.app"
     run(str(bundle / "Contents/Helpers/BossAssistantUpdater"), "verify", str(bundle), version)
     archive = output / f"BossAssistant-{version}-macos-arm64.zip"

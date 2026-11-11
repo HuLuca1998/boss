@@ -21,7 +21,7 @@ print('PASS: release version decimal carry')
 PY
 if [[ ${1:-} == "--installer" ]]; then
   SIGNING_IDENTITY=$(<"$ROOT/BossAssistant/SigningIdentity.txt")
-  APP="$ROOT/BossAssistant/build/首领助手.app"
+  APP="${APP_OUT:-$ROOT/BossAssistant/build}/首领助手.app"
   CURRENT_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
   TEST_VERSION=99.0.0
   [[ -d "$APP" ]] || { print -u2 "请先构建应用";exit 1; }

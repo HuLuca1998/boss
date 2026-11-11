@@ -350,7 +350,7 @@
     "build": 39,
     "change": "Configurable 0–300ms release grace (default80ms, step10ms), sampled last-pressed opposing-direction priority, authoritative native movement keys.",
     "tests": "Full Swift application compiled successfully without installation/signing; movement policy and five Runtime suites, MCP protocol suite, update policy and three-profile game cache tests passed.",
-    "deployment": "NOT RELEASED OR INSTALLED. Official build refused because fixed signing identity B6D3E9976B2192AAB7A6AE143C3A9012D7C101DA is unavailable. Restore original certificate/private key before signed installer tests, release, in-app update, reinjection and connection verification.",
+    "deployment": "Pending Actions signed release. User authorized migration after original signing Mac was lost. Encrypted identity committed with password in GitHub Secret; temporary import, pinned identity match and keychain cleanup passed. Full signed release and installation remain pending.",
     "limits": "No live game change-of-direction or UI update verification this run. Sample period40ms; ordering of presses inside a single sample is not observable."
   }
 }

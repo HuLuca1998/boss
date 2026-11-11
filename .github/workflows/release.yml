@@ -1,0 +1,29 @@
+name: Signed Release
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: signed-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main' && github.repository == 'HuLuca1998/boss'
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Configure release author
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - name: Test, sign, verify installer and publish stable release
+        env:
+          BOSS_SIGNING_PASSWORD: ${{ secrets.BOSS_SIGNING_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/with-signing.py python3 scripts/release.py

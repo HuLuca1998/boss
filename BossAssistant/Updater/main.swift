@@ -6,7 +6,7 @@ import Darwin
 struct InstallerError:LocalizedError {let message:String;init(_ value:String){message=value};var errorDescription:String?{message}}
 let fm=FileManager.default
 let bundleID="local.luca.HeroBossAssistant"
-let requirement="identifier \"local.luca.HeroBossAssistant\" and certificate leaf = H\"B6D3E9976B2192AAB7A6AE143C3A9012D7C101DA\""
+let requirement=UpdatePolicy.requirement
 func verify(_ app:URL,version:String?)throws {
     guard app.pathExtension=="app",let info=NSDictionary(contentsOf:app.appendingPathComponent("Contents/Info.plist")),info["CFBundleIdentifier"] as? String==bundleID else{throw InstallerError("更新包应用标识不匹配")}
     if let version,info["CFBundleShortVersionString"] as? String != version{throw InstallerError("更新包版本不匹配")}

@@ -22,7 +22,7 @@ struct AppRelease:Decodable,Identifiable {
 enum UpdatePolicy {
     static let repository="HuLuca1998/boss"
     static let bundleID="local.luca.HeroBossAssistant"
-    static let certificate="B6D3E9976B2192AAB7A6AE143C3A9012D7C101DA"
+    static let certificate="3BCD9B3147AFC251112023155B19C6F396AFE4C0"
     static let requirement="identifier \"\(bundleID)\" and certificate leaf = H\"\(certificate)\""
     static func releases(_ list:[AppRelease])->[AppRelease]{
         list.filter{!$0.draft && !$0.prerelease && $0.tag_name.hasPrefix("v") && AppVersion($0.version) != nil && $0.archive != nil && $0.checksum != nil}.sorted{AppVersion($0.version)! > AppVersion($1.version)!}
