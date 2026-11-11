@@ -1,6 +1,11 @@
 name: Signed Release
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish a new stable release (false only tests and packages)
+        type: boolean
+        default: true
 permissions:
   contents: write
 concurrency:
@@ -26,4 +31,10 @@ jobs:
         env:
           BOSS_SIGNING_PASSWORD: ${{ secrets.BOSS_SIGNING_PASSWORD }}
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/with-signing.py python3 scripts/release.py
+          PUBLISH: ${{ inputs.publish }}
+        run: |
+          if [[ "$PUBLISH" == "true" ]]; then
+            python3 scripts/with-signing.py python3 scripts/release.py
+          else
+            python3 scripts/with-signing.py python3 scripts/release.py --prepare-only
+          fi

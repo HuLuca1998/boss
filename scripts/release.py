@@ -40,7 +40,7 @@ def main():
         raise SystemExit("工作区有未提交改动，请先检查并提交")
     tag = "v" + version
     existing = run("git", "tag", "--list", tag, capture=True).strip()
-    if existing:
+    if existing and not args.prepare_only:
         raise SystemExit(f"{tag} 已存在，拒绝重复发布；如上次发布中断，请按发布文档恢复")
     tags = run("git", "tag", "--list", "v*", "--sort=-version:refname", capture=True).splitlines()
     if tags and version != next_version(tags[0]):

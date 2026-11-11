@@ -53,10 +53,23 @@ def main():
             print('Pinned signing identity verified', flush=True)
             return subprocess.run(sys.argv[1:], cwd=ROOT).returncode
         finally:
+            # Always attempt every cleanup, even if macOS trust removal stalls.
+            cleanup = []
             if trusted:
-                subprocess.run([*trust_command, 'remove-trusted-cert', *trust_domain, str(certificate)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
-            subprocess.run(['security', 'list-keychains', '-d', 'user', '-s', *keychains], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
-            subprocess.run(['security', 'delete-keychain', keychain], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
+                cleanup.append([*trust_command, 'remove-trusted-cert', *trust_domain, str(certificate)])
+            cleanup.extend([
+                ['security', 'list-keychains', '-d', 'user', '-s', *keychains],
+                ['security', 'delete-keychain', keychain],
+            ])
+            for index, command in enumerate(cleanup):
+                try:
+                    result = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
+                    if result.returncode and Path(keychain).exists():
+                        print(f'Signing cleanup operation {index + 1} returned an error', flush=True)
+                except subprocess.TimeoutExpired:
+                    print(f'Signing cleanup operation {index + 1} timed out; continuing cleanup', flush=True)
+            if Path(keychain).exists():
+                raise RuntimeError('Temporary signing keychain was not removed')
 
 if __name__ == '__main__':
     try:
