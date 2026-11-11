@@ -11,7 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def run(*args, **kwargs):
     # Never echo command arguments: security receives temporary passwords as arguments.
-    return subprocess.run(args, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
+    label=" ".join(args[:2])
+    print(f"Signing setup: {label}", flush=True)
+    return subprocess.run(args, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, **kwargs)
 
 def main():
     password = os.environ.pop('BOSS_SIGNING_PASSWORD', '')
@@ -20,6 +22,9 @@ def main():
     original = run('security', 'list-keychains', '-d', 'user').stdout.decode()
     keychains = [line.strip().strip('"') for line in original.splitlines() if line.strip()]
     certificate = ROOT / 'signing/BossAssistant.cer'
+    ci = os.environ.get('GITHUB_ACTIONS') == 'true'
+    trust_command = ['sudo', '-n', 'security'] if ci else ['security']
+    trust_domain = ['-d'] if ci else []
     expected = (ROOT / 'BossAssistant/SigningIdentity.txt').read_text().strip()
     with tempfile.TemporaryDirectory(prefix='boss-signing-') as folder:
         directory = Path(folder)
@@ -38,7 +43,7 @@ def main():
                 '-T', '/usr/bin/codesign', '-T', '/usr/bin/security')
             identity.unlink()
             run('security', 'list-keychains', '-d', 'user', '-s', keychain, *keychains)
-            run('security', 'add-trusted-cert', '-r', 'trustRoot', '-p', 'codeSign', '-k', keychain, str(certificate))
+            run(*trust_command, 'add-trusted-cert', *trust_domain, '-r', 'trustRoot', '-p', 'codeSign', '-k', keychain, str(certificate))
             trusted = True
             run('security', 'set-key-partition-list', '-S', 'apple-tool:,apple:,codesign:',
                 '-s', '-k', keychain_password, keychain)
@@ -49,13 +54,13 @@ def main():
             return subprocess.run(sys.argv[1:], cwd=ROOT).returncode
         finally:
             if trusted:
-                subprocess.run(['security', 'remove-trusted-cert', str(certificate)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(['security', 'list-keychains', '-d', 'user', '-s', *keychains], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(['security', 'delete-keychain', keychain], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run([*trust_command, 'remove-trusted-cert', *trust_domain, str(certificate)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
+            subprocess.run(['security', 'list-keychains', '-d', 'user', '-s', *keychains], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
+            subprocess.run(['security', 'delete-keychain', keychain], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
 
 if __name__ == '__main__':
     try:
         sys.exit(main())
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         # CalledProcessError includes argv (and passwords); intentionally suppress it.
         raise SystemExit('Signing setup failed; check password, certificate, OpenSSL and keychain access')
