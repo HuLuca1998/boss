@@ -1,7 +1,7 @@
 (function () {
   var socket, stopped = false, navigation = null, priorAuto = null, targetedAreaBosses={};
   var keyboard = {enabled:false,pressed:{},eventCount:0,lastEvent:null,lastNativeAt:0};
-  var originalHasKeyDown=null, keyboardInstalled=false, escapeHeld=false, actionHeld={};
+  var originalHasKeyDown=null, keyboardInstalled=false, escapeHeld=false, actionHeld={}, keyboardSkillPress=null;
   function escapeBack(){
     if(typingText())return {closed:false,reason:'typing'};
     var mgr=UIMgr.inst,map=mgr._openViews,top=null,order=-Infinity,ambiguous=false;
@@ -55,8 +55,8 @@
     originalHasKeyDown=Laya.InputManager.hasKeyDown;
     Laya.stage.on(Laya.Event.KEY_DOWN,keyboard,function(e){keyboardEvent(e,true);});
     Laya.stage.on(Laya.Event.KEY_UP,keyboard,function(e){keyboardEvent(e,false);});
-    Laya.stage.on(Laya.Event.BLUR,keyboard,clearArrowKeys);
-    if(typeof window!=='undefined' && window.addEventListener)window.addEventListener('blur',clearArrowKeys);
+    Laya.stage.on(Laya.Event.BLUR,keyboard,function(){clearArrowKeys();cancelKeyboardSkill();});
+    if(typeof window!=='undefined' && window.addEventListener)window.addEventListener('blur',function(){clearArrowKeys();cancelKeyboardSkill();});
     Laya.InputManager.hasKeyDown=function(code){
       var arrow={87:38,83:40,65:37,68:39}[code];
       if(keyboard.enabled && arrow) {
@@ -90,7 +90,8 @@
       if(!view || depth>6 || !keyboardVisible(view.gameObject))return;
       if(code===81){
         var classes=[typeof MainMoreMenuSubView==='undefined'?null:MainMoreMenuSubView,typeof CombatMainView==='undefined'?null:CombatMainView,typeof BattleViewerAllianceDungeonSubView==='undefined'?null:BattleViewerAllianceDungeonSubView];
-        if(classes.some(function(c){return c && view instanceof c && view.OnlzidongBtnClick===c.prototype.OnlzidongBtnClick;}) && keyboardVisible(view.lzidongBtn) && view.lzidongBtn.mouseEnabled!==false && !view.lzidongBtn.disabled)candidates.push(view);
+        var autoControl=keyboardVisible(view.isAutoImage) ? view.isAutoImage : view.lzidongBtn;
+        if(classes.some(function(c){return c && view instanceof c && view.OnlzidongBtnClick===c.prototype.OnlzidongBtnClick;}) && keyboardVisible(autoControl) && autoControl.mouseEnabled!==false && !autoControl.disabled)candidates.push(view);
       }else if(typeof MainSkillSubView!=='undefined' && view instanceof MainSkillSubView)candidates.push(view);
       (view._subViewList||[]).forEach(function(sub){visit(sub,depth+1);});
     }
@@ -111,14 +112,33 @@
     if(!item || typeof SkillCardItem==='undefined' || !(item instanceof SkillCardItem) || item.OnClickHandler!==SkillCardItem.prototype.OnClickHandler || item.TryOperate!==SkillCardItem.prototype.TryOperate || !keyboardVisible(item.gameObject) || item.gameObject.mouseEnabled===false || item.IsDisableOperate())return {requested:false,reason:'skill_disabled'};
     var battle=item.GetBindBattle(),data=battle && battle.battleData;
     if(!data || !data.CheckHasWorldInfo(false) || data.CheckCurHeroIsDead())return {requested:false,reason:'hero_unavailable'};
-    // Native click validates cooldown, energy, bans and unlocks. Clear stale selection
-    // before requesting release so a rejected click cannot cast a previously selected skill.
-    data.SetCurSelectingSkillId(null);
-    item.OnClickHandler();
-    if(data.GetCurSelectingSkillId()!==item.skillId)return {requested:false,reason:'native_rejected',slot:slot.slotId};
-    data.SetSkillSelectIsCancel(false);item.TryOperate('skill');
+    if(keyboardSkillPress || !view.rockerComp || !Laya.timer || !Laya.timer.frameOnce)return {requested:false,reason:'skill_busy'};
+    if(item.OnMouseDown!==SkillCardItem.prototype.OnMouseDown || item.OnMouseUp!==SkillCardItem.prototype.OnMouseUp)return {requested:false,reason:'unsupported_skill'};
+    item.Update(0);
+    if(!item.ableToCastSkill)return {requested:false,reason:'native_rejected',slot:slot.slotId};
+    var point=item.clickBtn.localToGlobal(new Laya.Point(item.clickBtn.width/2,item.clickBtn.height/2));
+    var event={stageX:point.x,stageY:point.y,touchPos:point,touchId:98761,stopPropagation:function(){}};
+    item.OnMouseDown(event);
+    if(view.rockerComp.touchId!==event.touchId || !RockerMgr.inst.IsInControl('skill')){item.ResetPressInfo();return {requested:false,reason:'native_rejected',slot:slot.slotId};}
+    var press={item:item,view:view,data:data,event:event,frames:0};keyboardSkillPress=press;
+    function releaseWhenReady(){
+      if(keyboardSkillPress!==press)return;
+      var state=data.world && data.world.GetGlobalComp(RCompEnum.GSkillSelectSfx);
+      if(!keyboard.enabled || typingText() || !keyboardVisible(item.gameObject) || data.CheckCurHeroIsDead() || ++press.frames>15){cancelKeyboardSkill();return;}
+      // The render system must see the native rocker held for a frame to create
+      // curSkill and its targeting data. Selection + TryOperate in one tick loses it.
+      if(!state || !state.curSkill || state.curSkill.skillId!==item.skillId){Laya.timer.frameOnce(1,keyboard,releaseWhenReady);return;}
+      keyboardSkillPress=null;
+      item.OnMouseUp();view.rockerComp.onUp(event);
+    }
+    Laya.timer.frameOnce(1,keyboard,releaseWhenReady);
     return {requested:true,action:'petSkill',slot:slot.slotId};
   }
+  function cancelKeyboardSkill(){
+    var press=keyboardSkillPress;if(!press)return;keyboardSkillPress=null;
+    press.data.SetSkillSelectIsCancel(true);press.item.ResetPressInfo();press.view.rockerComp.onUp(press.event);
+  }
+
   function keyboardActions(keys){
     var next={};
     keys.forEach(function(code){if([49,50,51,81].indexOf(code)>=0)next[code]=true;});
@@ -720,6 +740,7 @@
     var rows=ctx ? targetRows(ctx).map(function(r){var e=ctx.world.GetEntity(Number(r.eid)),t=e && e.Get(RCompEnum.RTransform);r.position=t ? {x:t.pos.x,y:t.pos.y,z:t.pos.z} : null;return r;}) : [];
     return {version:1,at:Date.now(),scriptIdentity:'__CODEX_SCRIPT_ID__',location:loc,
       locked:assist.locked || targeting.locked,nearbyReady:!!ctx,selectionRadius:ctx ? ctx.radius : null,enemies:rows,
+      keyboard:keyboardStatus(),
       combat:{auto:data && typeof data.IsHeroAutoUseSkill==='function' ? data.IsHeroAutoUseSkill() : null,
         heroDead:data && typeof data.CheckCurHeroIsDead==='function' ? data.CheckCurHeroIsDead() : null,
         hp:heroAttr ? heroAttr.GetNowHp(true) : null,maxHp:heroAttr ? heroAttr.GetMaxHp() : null},
@@ -814,7 +835,7 @@
     if(m.op==='assistStatus')return assistStatus();
     if(m.op==='assistRun')return assistRun(m);
     if(m.op==='keyboardMode') {
-      escapeHeld=false;actionHeld={};
+      cancelKeyboardSkill();escapeHeld=false;actionHeld={};
       if(m.enabled===true)installKeyboard();
       clearArrowKeys();keyboard.enabled=m.enabled===true;
       if(keyboard.enabled && m.preserveNavigation!==true){navigation=null;EventFollowMgr.inst.ClearEventFollow();}
@@ -895,7 +916,7 @@
       socket.onclose=function(){
         try{targetRelease();}catch(e){}targeting.enabled=false;targeting.autoHighest=false;
         assist.redPacketsEnabled=false;assist.fastEnabled=false;
-        keyboard.enabled=false;clearArrowKeys();
+        keyboard.enabled=false;cancelKeyboardSkill();clearArrowKeys();
         if(priorAuto!==null){try{var inWild=locationSnapshot().kind==='wild';suspendHunt();if(inWild)changeOwnedAuto(false);}catch(e){}priorAuto=null;}
         if(!stopped)setTimeout(connect,3000);
       };

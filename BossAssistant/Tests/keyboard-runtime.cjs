@@ -60,9 +60,15 @@ command(false);assert.equal(has(65),true,'disabled mode restores original engine
 console.log('PASS: native direction authority, raw opposite keys, typing and expiry');
 
 // Combat hotkeys use visible native controls and consume each press even if blocked.
+let frames=[],rockerHeld=false;
+context.Laya.timer={frameOnce(n,owner,fn){frames.push(fn);}};
+context.Laya.Point=class {constructor(x,y){this.x=x;this.y=y;}};
+context.RCompEnum={GSkillSelectSfx:1};
+context.RockerMgr={inst:{IsInControl:()=>rockerHeld}};
 let ready=true,teleport=false,following=false,casts=[],toggles=0,selected=null,reject=false;
 context.SceneMgr={inst:{GetCurSceneType:()=>1}};context.Scene={SceneType:{Wild:1,WildSync:5}};
-const battleData={world:{},CheckCurHeroCreated:()=>true,CheckHasWorldInfo:()=>true,CheckCurHeroIsDead:()=>false,SetCurSelectingSkillId:id=>{selected=id;},GetCurSelectingSkillId:()=>selected,SetSkillSelectIsCancel(){}};
+const renderState={curSkill:null};
+const battleData={world:{GetGlobalComp:()=>renderState},CheckCurHeroCreated:()=>true,CheckHasWorldInfo:()=>true,CheckCurHeroIsDead:()=>false,SetCurSelectingSkillId:id=>{selected=id;},GetCurSelectingSkillId:()=>selected,SetSkillSelectIsCancel(){}};
 const battle={_fighting:true,battleData};
 context.CombatMgr={inst:{GetBattleBySceneType:()=>ready?battle:null,GetCurRenderSceneType:()=>1}};
 context.CombatTPMgr={inst:{GetIsTPing:()=>teleport}};
@@ -75,14 +81,21 @@ class SkillCardItem {
  IsDisableOperate(){return false;}
  GetBindBattle(){return battle;}
  OnClickHandler(){if(!reject)selected=this.skillId;}
- TryOperate(kind){if(kind==='skill'&&selected===this.skillId)casts.push(this.GetSlotId());}
+ TryOperate(kind){if(kind==='skill'&&selected===this.skillId&&renderState.curSkill)casts.push(this.GetSlotId());}
+ Update(){this.ableToCastSkill=!reject;}
+ OnMouseDown(e){selected=this.skillId;rockerHeld=true;skills.rockerComp.touchId=e.touchId;}
+ OnMouseUp(){this.TryOperate('skill');}
+ ResetPressInfo(){}
 }
 Object.assign(context,{MainMoreMenuSubView,MainSkillSubView,SkillCardItem});
 const root={visible:true},menu=Object.assign(new MainMoreMenuSubView(),{gameObject:{visible:true,parent:root},lzidongBtn:{visible:true,parent:root}});
-const items={};for(let i=0;i<3;i++)items[i]=Object.assign(new SkillCardItem(),{skillId:101+i,gameObject:{visible:true,mouseEnabled:true,parent:root}});
-const skills=Object.assign(new MainSkillSubView(),{gameObject:{visible:true,parent:root},activeSkillList:[11,12,13].map(slotId=>({slotId,skillId:slotId+90})),skillListScrollView:{GetShowItemDic:()=>items}});
+const items={};for(let i=0;i<3;i++)items[i]=Object.assign(new SkillCardItem(),{skillId:101+i,clickBtn:{width:10,height:10,localToGlobal:p=>p},gameObject:{visible:true,mouseEnabled:true,parent:root}});
+const skills=Object.assign(new MainSkillSubView(),{rockerComp:{touchId:-1,onUp(){rockerHeld=false;this.touchId=-1;renderState.curSkill=null;}},gameObject:{visible:true,parent:root},activeSkillList:[11,12,13].map(slotId=>({slotId,skillId:slotId+90})),skillListScrollView:{GetShowItemDic:()=>items}});
 open.clear();open.set(1002,{gameObject:root,Layer:()=> 'BottomLayer',_subViewList:[menu,skills]});
-command(true);sendKeys([49,50,51,81]);assert.deepEqual(casts,[11,12,13]);assert.equal(toggles,1);
+function renderFrame(){if(rockerHeld)renderState.curSkill={skillId:selected};const pending=frames;frames=[];pending.forEach(fn=>fn());}
+command(true);
+for(const code of [49,50,51]){sendKeys([]);sendKeys([code]);const before=casts.length;assert.equal(rockerHeld,true);assert.equal(casts.length,before);renderFrame();assert.equal(casts.length,before+1);}
+sendKeys([49,50,51,81]);renderFrame();assert.deepEqual(casts,[11,12,13,11]);casts.pop();assert.equal(toggles,1);
 sendKeys([49,50,51,81]);assert.equal(casts.length,3);assert.equal(toggles,1,'heartbeat never toggles twice');
 sendKeys([]);sendKeys([81]);assert.equal(toggles,2);
 for(const block of ['typing','modal','loading','teleport','following','hidden','disabled','locked']){
@@ -100,10 +113,12 @@ for(const block of ['typing','modal','loading','teleport','following','hidden','
  sendKeys([49]);assert.equal(casts.length,3,'blocked press cannot fire after '+block+' clears');
 }
 sendKeys([]);reject=true;selected=101;sendKeys([49]);assert.equal(casts.length,3,'native rejection cannot release stale selected skill');reject=false;
-sendKeys([]);sendKeys([49,38]);assert.equal(casts.length,4);assert.equal(has(87),true);
+sendKeys([]);sendKeys([49,38]);renderFrame();assert.equal(casts.length,4);assert.equal(has(87),true);
 sendKeys([]);chat=true;sendKeys([81]);chat=false;sendKeys([81]);assert.equal(toggles,2);
 sendKeys([]);menu.lzidongBtn.visible=false;sendKeys([81]);assert.equal(toggles,2);
+sendKeys([]);menu.isAutoImage={visible:true,parent:root};sendKeys([81]);assert.equal(toggles,3,'current auto image works when legacy button is hidden');
 command(false);sendKeys([49]);assert.equal(casts.length,4);
+command(true);sendKeys([49]);assert.equal(rockerHeld,true);blur();assert.equal(rockerHeld,false,'blur cancels pending native press');renderFrame();assert.equal(casts.length,4,'cancelled press never casts');
 console.log('PASS: three skill slots, native rejection, Q edge, heartbeat, typing/modal/scene/visibility/lock guards and movement coexistence');
 
 // Run the shipped click/release handlers for all supported cache profiles.
