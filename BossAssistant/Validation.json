@@ -357,5 +357,12 @@
     "ci": "Checks succeeded. Release run42959924413 completed tests, signed build, installer rejection/rollback/replacement/tamper tests and public release, then failed during trust cleanup. Follow-up prepare-only run42960323317 succeeded with robust keychain cleanup; did not replace public assets.",
     "signing_storage": "Encrypted PKCS12 bundle in repository, random high-entropy password in BOSS_SIGNING_PASSWORD Actions Secret only. Temporary generation keys/password removed. Import/pinned identity smoke test and wrong-password/no-secret-output test passed. Temporary keychain removed even when public certificate admin trust removal times out; hosted runner is discarded afterwards.",
     "live": "Completed live UI reinjection of Main-dda2f; game reconnected with17 bosses and ready wild sceneType1. After user unlocked System Settings, removed stale old-signature input-monitoring entry, requested permission from new installed app, enabled it and fully quit/reopened after dismissing Settings sheet. App UI confirms Input Monitoring authorized and keyboard enabled. Stepper80→90→80 verified; persisted value80. Read-only API confirms keyboard enabled, pressed empty, native event source and ready scene; deep strict installed signature verification passed."
+  },
+  "keyboardCombat153": {
+    "version": "1.5.3",
+    "build": 40,
+    "changes": "1/J,2/K,3/L map to ordered pet skill cards; Q invokes visible native auto handler; edge-only actions, typing/modal/scene guards and original skill validation",
+    "tests": "Five Runtime suites, MovementInput aliases/release, three shipped native skill click/release handlers and cooldown/energy/ban/death/cannot-cast rejections, three cache profiles and update policy passed. Native Swift compile passed with installed MacOSX26.5 SDK; default MacOSX27 SDK missing SwiftUIMacros. Signed build and installer tests to be performed by release Actions.",
+    "live": "Pending official release installation and reinjection; no live hotkey success claimed."
   }
 }

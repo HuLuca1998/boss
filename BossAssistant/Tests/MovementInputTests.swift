@@ -9,6 +9,7 @@ import Foundation
         for (native,expected) in MovementInput.bindings {
             held=[native];assert(sample()==[expected],"Failed native key \(native)")
         }
+        held=[18,38,19,40,20,37,12];assert(sample()==[49,50,51,81],"Skill aliases deduplicate")
         held=[13,124];assert(sample()==[38,39],"Mixed WASD/arrow diagonal")
         held=[13,126];assert(sample()==[38],"Same direction must be deduplicated")
         held.remove(13);assert(sample()==[38],"Releasing W must preserve held Up")
@@ -36,6 +37,8 @@ import Foundation
         assert(move([37],2)==[37])
         assert(move([],2.04,300,false).isEmpty,"Focus loss bypasses grace")
         assert(move([],2.08).isEmpty,"Focus restoration must not revive direction")
+        assert(move([49,50,51,81],2.2)==[49,50,51,81])
+        assert(move([],2.24).isEmpty,"Combat keys never receive movement release delay")
         assert(move([27],3)==[27])
         assert(move([],3.04).isEmpty,"ESC never delayed")
         assert(move([38],4)==[38])

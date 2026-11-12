@@ -24,7 +24,8 @@ struct Snapshot:Codable {
     let runtimeVersion:Int?
 }
 struct EscapeStatus:Codable {let closed:Bool;let reason:String?;let viewId:Int?;let at:Double}
-struct KeyboardStatus:Codable {let enabled:Bool;let pressed:[Int]?;let sceneType:Int?;let escape:EscapeStatus?}
+struct KeyboardActionStatus:Codable {let requested:Bool;let reason:String?;let action:String?;let slot:Int?;let code:Int;let at:Double}
+struct KeyboardStatus:Codable {let enabled:Bool;let pressed:[Int]?;let sceneType:Int?;let escape:EscapeStatus?;var action:KeyboardActionStatus?=nil}
 struct CatalogBoss:Codable {
     let boss_name:String;let boss_id:Int;let field_name:String;let field_id:Int;let area_id:Int
     let instance_id:Int;let map_id:Int;let point_id:Int;let point_index:Int;let point_type:Int

@@ -2,7 +2,7 @@ import Foundation
 
 // The foreground guard runs before any keyboard state is read.
 enum MovementInput {
-    static let bindings:[(UInt16,Int)]=[(123,37),(124,39),(125,40),(126,38),(0,37),(2,39),(1,40),(13,38),(53,27)]
+    static let bindings:[(UInt16,Int)]=[(123,37),(124,39),(125,40),(126,38),(0,37),(2,39),(1,40),(13,38),(53,27),(18,49),(38,49),(19,50),(40,50),(20,51),(37,51),(12,81)]
     static func keys(enabled:Bool,frontmostBundle:String?,isDown:(UInt16)->Bool)->[Int] {
         guard enabled,frontmostBundle == "com.yzlm.game" else{return []}
         return Array(Set(bindings.compactMap{native,game in isDown(native) ? game : nil})).sorted()
@@ -36,7 +36,7 @@ struct MovementContinuity {
             if now-(releasedAt ?? now)<Double(Self.delay(delayMilliseconds))/1000 {direction=heldDirection}
             else {heldDirection=[];releasedAt=nil}
         }
-        if current.contains(27){direction.append(27)}
+        direction.append(contentsOf:current.filter{[27,49,50,51,81].contains($0)})
         return direction.sorted()
     }
 }

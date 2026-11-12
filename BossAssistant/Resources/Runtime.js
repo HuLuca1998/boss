@@ -1,7 +1,7 @@
 (function () {
   var socket, stopped = false, navigation = null, priorAuto = null, targetedAreaBosses={};
   var keyboard = {enabled:false,pressed:{},eventCount:0,lastEvent:null,lastNativeAt:0};
-  var originalHasKeyDown=null, keyboardInstalled=false, escapeHeld=false;
+  var originalHasKeyDown=null, keyboardInstalled=false, escapeHeld=false, actionHeld={};
   function escapeBack(){
     if(typingText())return {closed:false,reason:'typing'};
     var mgr=UIMgr.inst,map=mgr._openViews,top=null,order=-Infinity,ambiguous=false;
@@ -73,7 +73,61 @@
     };
     keyboardInstalled=true;
   }
-  function keyboardStatus(){return {sceneType:typeof SceneMgr!=='undefined' ? SceneMgr.inst.GetCurSceneType() : null,enabled:keyboard.enabled,pressed:Object.keys(keyboard.pressed).map(Number),eventCount:keyboard.eventCount,lastEvent:keyboard.lastEvent,escape:keyboard.lastEscape||null};}
+  function keyboardStatus(){return {sceneType:typeof SceneMgr!=='undefined' ? SceneMgr.inst.GetCurSceneType() : null,enabled:keyboard.enabled,pressed:Object.keys(keyboard.pressed).map(Number),eventCount:keyboard.eventCount,lastEvent:keyboard.lastEvent,escape:keyboard.lastEscape||null,action:keyboard.lastAction||null};}
+  function keyboardVisible(node){
+    if(!node)return false;
+    for(var n=node;n;n=n.parent)if(n.destroyed || n.visible===false || n.active===false)return false;
+    return true;
+  }
+  function keyboardCombatAction(code){
+    if(typingText())return {requested:false,reason:'typing'};
+    if(assist.locked || targeting.locked)return {requested:false,reason:'account_locked'};
+    var loc=locationSnapshot();
+    if(!loc.ready || CombatTPMgr.inst.GetIsTPing() || teamFollowing())return {requested:false,reason:'scene_unavailable'};
+    var opened=UIMgr.inst._openViews,candidates=[],blocked=false;
+    if(!opened || !opened.forEach)return {requested:false,reason:'ui_unavailable'};
+    function visit(view,depth){
+      if(!view || depth>6 || !keyboardVisible(view.gameObject))return;
+      if(code===81){
+        var classes=[typeof MainMoreMenuSubView==='undefined'?null:MainMoreMenuSubView,typeof CombatMainView==='undefined'?null:CombatMainView,typeof BattleViewerAllianceDungeonSubView==='undefined'?null:BattleViewerAllianceDungeonSubView];
+        if(classes.some(function(c){return c && view instanceof c && view.OnlzidongBtnClick===c.prototype.OnlzidongBtnClick;}) && keyboardVisible(view.lzidongBtn) && view.lzidongBtn.mouseEnabled!==false && !view.lzidongBtn.disabled)candidates.push(view);
+      }else if(typeof MainSkillSubView!=='undefined' && view instanceof MainSkillSubView)candidates.push(view);
+      (view._subViewList||[]).forEach(function(sub){visit(sub,depth+1);});
+    }
+    opened.forEach(function(view){
+      if(!view || !keyboardVisible(view.gameObject))return;
+      var name=view.viewName || (view.viewVo && view.viewVo.name);
+      if(['NotifyMsgView','NotifyLongMsgView','NotifyScoreUpView','DropItemNotifyView','NotifyTaskUpView'].indexOf(name)<0 && typeof view.Layer==='function' && ['MiddleLayer','HighLayer','TopLayer'].indexOf(view.Layer())>=0)blocked=true;
+      visit(view,0);
+    });
+    if(blocked)return {requested:false,reason:'modal_open'};
+    if(candidates.length!==1)return {requested:false,reason:'no_unique_control'};
+    var view=candidates[0];
+    if(code===81){view.OnlzidongBtnClick();return {requested:true,action:'auto'};}
+    var index=code-49,slot=view.activeSkillList && view.activeSkillList[index];
+    if(!slot || slot.lock || !slot.skillId || view.isInControl)return {requested:false,reason:'skill_unavailable'};
+    var items=view.skillListScrollView.GetShowItemDic(),item=null;
+    Object.keys(items).forEach(function(k){if(items[k].GetSlotId()===slot.slotId)item=items[k];});
+    if(!item || typeof SkillCardItem==='undefined' || !(item instanceof SkillCardItem) || item.OnClickHandler!==SkillCardItem.prototype.OnClickHandler || item.TryOperate!==SkillCardItem.prototype.TryOperate || !keyboardVisible(item.gameObject) || item.gameObject.mouseEnabled===false || item.IsDisableOperate())return {requested:false,reason:'skill_disabled'};
+    var battle=item.GetBindBattle(),data=battle && battle.battleData;
+    if(!data || !data.CheckHasWorldInfo(false) || data.CheckCurHeroIsDead())return {requested:false,reason:'hero_unavailable'};
+    // Native click validates cooldown, energy, bans and unlocks. Clear stale selection
+    // before requesting release so a rejected click cannot cast a previously selected skill.
+    data.SetCurSelectingSkillId(null);
+    item.OnClickHandler();
+    if(data.GetCurSelectingSkillId()!==item.skillId)return {requested:false,reason:'native_rejected',slot:slot.slotId};
+    data.SetSkillSelectIsCancel(false);item.TryOperate('skill');
+    return {requested:true,action:'petSkill',slot:slot.slotId};
+  }
+  function keyboardActions(keys){
+    var next={};
+    keys.forEach(function(code){if([49,50,51,81].indexOf(code)>=0)next[code]=true;});
+    var previous=actionHeld;actionHeld=next;
+    Object.keys(next).forEach(function(code){if(!previous[code]){
+      try{keyboard.lastAction=keyboardCombatAction(Number(code));}catch(e){keyboard.lastAction={requested:false,reason:'unavailable'};}
+      keyboard.lastAction.code=Number(code);keyboard.lastAction.at=Date.now();
+    }});
+  }
   function locationSnapshot() {
     var type=SceneMgr.inst.GetCurSceneType();
     var battle=CombatMgr.inst.GetBattleBySceneType(type);
@@ -760,7 +814,7 @@
     if(m.op==='assistStatus')return assistStatus();
     if(m.op==='assistRun')return assistRun(m);
     if(m.op==='keyboardMode') {
-      escapeHeld=false;
+      escapeHeld=false;actionHeld={};
       if(m.enabled===true)installKeyboard();
       clearArrowKeys();keyboard.enabled=m.enabled===true;
       if(keyboard.enabled && m.preserveNavigation!==true){navigation=null;EventFollowMgr.inst.ClearEventFollow();}
@@ -770,6 +824,7 @@
       if(!keyboard.enabled)throw Error('keyboard_disabled');
       var escapeDown=Array.isArray(m.keys) && m.keys.indexOf(27)>=0;
       if(escapeDown && !escapeHeld){escapeHeld=true;keyboard.lastEscape=escapeBack();keyboard.lastEscape.at=Date.now();}else escapeHeld=escapeDown;
+      keyboardActions(Array.isArray(m.keys)?m.keys:[]);
       clearArrowKeys();keyboard.lastNativeAt=Date.now();
       if(!typingText())(Array.isArray(m.keys)?m.keys:[]).forEach(function(code){if([37,38,39,40].indexOf(code)>=0)keyboard.pressed[code]=true;});
       keyboard.eventCount++;keyboard.lastEvent={keys:Object.keys(keyboard.pressed).map(Number),time:Date.now(),source:'native'};

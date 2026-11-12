@@ -113,6 +113,7 @@ import CoreGraphics
     private var refreshTime=Date.distantPast
     private var keyboardController:KeyboardController?
     private var lastEscapeAt:Double=0
+    private var lastKeyboardActionAt:Double=0
     private var keyboardPreferred=UserDefaults.standard.object(forKey:"keyboardPreferred") as? Bool ?? true
     private var connectionGeneration=0
     private var savedHuntArea=UserDefaults.standard.object(forKey:"continuousHuntArea") as? Int
@@ -408,9 +409,9 @@ import CoreGraphics
     var areaName:String {snapshot?.areaName ?? regions.first{$0.id==snapshot?.areaId}?.name ?? "等待检测"}
     var keyboardDescription:String {
         if !keyboardEnabled{return "键盘控制已关闭"}
-        if !connected{return "方向键 / WASD / ESC 等待游戏连接"}
+        if !connected{return "方向键 / WASD / 123 / JKL / Q / ESC 等待游戏连接"}
         if !keyboardInputAllowed{return "键盘控制等待输入监控授权"}
-        return keyboardActive ? "方向键 / WASD / ESC 已开启" : "键盘控制等待游戏就绪"
+        return keyboardActive ? "方向键 / WASD / 123 / JKL / Q / ESC 已开启" : "键盘控制等待游戏就绪"
     }
     var assistanceDescription:String {
         if recoveryLocked {return String(format:"账号保护中 · %02d:%02d:%02d 后重试登录",recoveryRemaining/3600,(recoveryRemaining%3600)/60,recoveryRemaining%60)}
@@ -565,6 +566,11 @@ import CoreGraphics
                     if let result=status.escape,result.at != self.lastEscapeAt {
                         self.lastEscapeAt=result.at
                         self.log(result.closed ? "ESC：已触发页面返回（\(result.viewId ?? 0)）" : "ESC：未执行返回（\(result.reason ?? "未知")，页面\(result.viewId ?? 0)）")
+                    }
+                    if let result=status.action,result.at != self.lastKeyboardActionAt {
+                        self.lastKeyboardActionAt=result.at
+                        let label=result.code==81 ? "Q 自动战斗" : "宠物技能 \(result.code-48)"
+                        self.log(result.requested ? "\(label)：已交给游戏原生按钮处理" : "\(label)：未执行（\(result.reason ?? "未知")）",category:"键盘")
                     }
                     let pressed = !(status.pressed ?? []).isEmpty
                     let wasHeld=self.continuity.movementHeld

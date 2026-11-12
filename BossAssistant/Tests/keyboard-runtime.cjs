@@ -58,3 +58,72 @@ sendKeys([39]);context.Date={now:()=>Date.now()+1500};assert.equal(has(65)||has(
 sendKeys([]);assert.equal(has(65)||has(68),false,'release cannot revive raw WASD');
 command(false);assert.equal(has(65),true,'disabled mode restores original engine');nativeKeys.clear();
 console.log('PASS: native direction authority, raw opposite keys, typing and expiry');
+
+// Combat hotkeys use visible native controls and consume each press even if blocked.
+let ready=true,teleport=false,following=false,casts=[],toggles=0,selected=null,reject=false;
+context.SceneMgr={inst:{GetCurSceneType:()=>1}};context.Scene={SceneType:{Wild:1,WildSync:5}};
+const battleData={world:{},CheckCurHeroCreated:()=>true,CheckHasWorldInfo:()=>true,CheckCurHeroIsDead:()=>false,SetCurSelectingSkillId:id=>{selected=id;},GetCurSelectingSkillId:()=>selected,SetSkillSelectIsCancel(){}};
+const battle={_fighting:true,battleData};
+context.CombatMgr={inst:{GetBattleBySceneType:()=>ready?battle:null,GetCurRenderSceneType:()=>1}};
+context.CombatTPMgr={inst:{GetIsTPing:()=>teleport}};
+context.WildIdleModel={inst:{GetCurFieldId:()=>0}};
+context.WildModel={inst:{CheckIsWildSync:()=>following,IsWildSyncLeader:()=>false}};
+class MainMoreMenuSubView {OnlzidongBtnClick(){toggles++;}}
+class MainSkillSubView {}
+class SkillCardItem {
+ GetSlotId(){return this.skillId-90;}
+ IsDisableOperate(){return false;}
+ GetBindBattle(){return battle;}
+ OnClickHandler(){if(!reject)selected=this.skillId;}
+ TryOperate(kind){if(kind==='skill'&&selected===this.skillId)casts.push(this.GetSlotId());}
+}
+Object.assign(context,{MainMoreMenuSubView,MainSkillSubView,SkillCardItem});
+const root={visible:true},menu=Object.assign(new MainMoreMenuSubView(),{gameObject:{visible:true,parent:root},lzidongBtn:{visible:true,parent:root}});
+const items={};for(let i=0;i<3;i++)items[i]=Object.assign(new SkillCardItem(),{skillId:101+i,gameObject:{visible:true,mouseEnabled:true,parent:root}});
+const skills=Object.assign(new MainSkillSubView(),{gameObject:{visible:true,parent:root},activeSkillList:[11,12,13].map(slotId=>({slotId,skillId:slotId+90})),skillListScrollView:{GetShowItemDic:()=>items}});
+open.clear();open.set(1002,{gameObject:root,Layer:()=> 'BottomLayer',_subViewList:[menu,skills]});
+command(true);sendKeys([49,50,51,81]);assert.deepEqual(casts,[11,12,13]);assert.equal(toggles,1);
+sendKeys([49,50,51,81]);assert.equal(casts.length,3);assert.equal(toggles,1,'heartbeat never toggles twice');
+sendKeys([]);sendKeys([81]);assert.equal(toggles,2);
+for(const block of ['typing','modal','loading','teleport','following','hidden','disabled','locked']){
+ sendKeys([]);
+ if(block==='typing')chat=true;
+ if(block==='modal')open.set(999,modal);
+ if(block==='loading')ready=false;
+ if(block==='teleport')teleport=true;
+ if(block==='following')following=true;
+ if(block==='hidden')root.visible=false;
+ if(block==='disabled')items[0].gameObject.mouseEnabled=false;
+ if(block==='locked')skills.activeSkillList[0].lock=true;
+ sendKeys([49]);assert.equal(casts.length,3,block);
+ chat=false;open.delete(999);ready=true;teleport=false;following=false;root.visible=true;items[0].gameObject.mouseEnabled=true;skills.activeSkillList[0].lock=false;
+ sendKeys([49]);assert.equal(casts.length,3,'blocked press cannot fire after '+block+' clears');
+}
+sendKeys([]);reject=true;selected=101;sendKeys([49]);assert.equal(casts.length,3,'native rejection cannot release stale selected skill');reject=false;
+sendKeys([]);sendKeys([49,38]);assert.equal(casts.length,4);assert.equal(has(87),true);
+sendKeys([]);chat=true;sendKeys([81]);chat=false;sendKeys([81]);assert.equal(toggles,2);
+sendKeys([]);menu.lzidongBtn.visible=false;sendKeys([81]);assert.equal(toggles,2);
+command(false);sendKeys([49]);assert.equal(casts.length,4);
+console.log('PASS: three skill slots, native rejection, Q edge, heartbeat, typing/modal/scene/visibility/lock guards and movement coexistence');
+
+// Run the shipped click/release handlers for all supported cache profiles.
+for(const file of ['OriginalCache.bin','OriginalCache-f648a.bin','OriginalCache-dda2f.bin']){
+ const raw=fs.readFileSync('BossAssistant/Resources/'+file).subarray(12,-20),key=Buffer.from('8fbf3b778fc986d812a84c9ebd4aba2d','hex');
+ const source=Buffer.from(raw.map((v,i)=>v^key[i%16])).toString('utf8');
+ const start=source.indexOf('SkillCardItem=class'),end=source.indexOf('RockerControl=class',start),card=source.slice(start,end);
+ const click=card.slice(card.indexOf('OnClickHandler(){'),card.indexOf('Recycle(){'));
+ const operate=card.slice(card.indexOf('TryOperate(e){'),card.indexOf('Destroy(){',card.indexOf('TryOperate(e){')));
+ assert(click.startsWith('OnClickHandler(){')&&operate.startsWith('TryOperate(e){'),file);
+ let selection=null,castCount=0,canUse=true,cost=true,banned=false,dead=false;
+ const data={CheckHasWorldInfo:()=>true,CheckCurHeroIsDead:()=>dead,CheckCurHeroCanUseSkill:()=>canUse,GetCurHeroGlobalCD:()=>0,GetCurHeroTargetSkillGroupCD:()=>0,GetCurControlHeroEId:()=>1,GetTargetEntity:()=>({}),SetCurSelectingSkillId:id=>selection=id,GetCurSelectingSkillId:()=>selection,SetTryCastSkill:()=>castCount++};
+ const ctx={SkillUtils:{IsSkillSlotBan:()=>banned,IsSkillCostFulfill:()=>cost},NotifyMgr:{inst:{ShowMsg(){},ShowSysMsg(){}}},SkillModel:{inst:{ShowForbidSpellSkillNotice(){}}},L:s=>s};
+ const Native=vm.runInNewContext('(class { '+click+operate+' })',ctx),item=new Native();
+ Object.assign(item,{GetBindBattle:()=>({battleData:data}),IsDisableOperate:()=>false,slotInfo:{slotCfg:{type:1},lock:false},skillInfo:{skillId:101,cd:0,IsIgnoreGlobalCD:()=>false},skillId:101,clickBtn:{}});
+ function press(){selection=null;item.OnClickHandler();if(selection===item.skillId)item.TryOperate('skill');}
+ press();assert.equal(castCount,1,file+' native success');
+ for(const failure of ['cd','energy','ban','dead','cannotUse']){
+  item.skillInfo.cd=failure==='cd'?1000:0;cost=failure!=='energy';banned=failure==='ban';dead=failure==='dead';canUse=failure!=='cannotUse';
+  press();assert.equal(castCount,1,file+' native '+failure+' rejection');
+ }
+}
+console.log('PASS: real shipped skill click/release methods across all three profiles, cooldown/energy/ban/death/cannot-cast rejection');
