@@ -362,7 +362,8 @@
     "version": "1.5.3",
     "build": 40,
     "changes": "1/J,2/K,3/L map to ordered pet skill cards; Q invokes visible native auto handler; edge-only actions, typing/modal/scene guards and original skill validation",
-    "tests": "Five Runtime suites, MovementInput aliases/release, three shipped native skill click/release handlers and cooldown/energy/ban/death/cannot-cast rejections, three cache profiles and update policy passed. Native Swift compile passed with installed MacOSX26.5 SDK; default MacOSX27 SDK missing SwiftUIMacros. Signed build and installer tests to be performed by release Actions.",
-    "live": "Pending official release installation and reinjection; no live hotkey success claimed."
+    "tests": "Five Runtime suites, MovementInput aliases/release, three shipped native skill click/release handlers and cooldown/energy/ban/death/cannot-cast rejections, three cache profiles and update policy passed. Native Swift compile passed with installed MacOSX26.5 SDK; default MacOSX27 SDK missing SwiftUIMacros. Signed release Actions 43157130061 and Checks 43157130445 passed, including fixed signer/version checks, bad-signer/tamper rejection, rollback and replacement.",
+    "live": "In-app About and Updates discovered 1.5.3, One-click Update installed the official release and reopened. Installed version 1.5.3/build40, deep strict signature and fixed signer verifier pass; bundled Runtime matches repository. Native UI reinjection completed, connection restored with Main-dda2f, ready wild scene and 17 bosses. Settings confirms keyboard enabled and Input Monitoring authorized. About recheck confirms latest. Existing native account-protection countdown remains; no manual protection reset or live skill casting/toggle test performed.",
+    "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.5.3"
   }
 }
