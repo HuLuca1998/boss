@@ -122,7 +122,7 @@ command(true);sendKeys([49]);assert.equal(rockerHeld,true);blur();assert.equal(r
 console.log('PASS: three skill slots, native rejection, Q edge, heartbeat, typing/modal/scene/visibility/lock guards and movement coexistence');
 
 // Run the shipped click/release handlers for all supported cache profiles.
-for(const file of ['OriginalCache.bin','OriginalCache-f648a.bin','OriginalCache-dda2f.bin']){
+for(const file of ['OriginalCache.bin','OriginalCache-f648a.bin','OriginalCache-dda2f.bin','OriginalCache-a1c86.bin']){
  const raw=fs.readFileSync('BossAssistant/Resources/'+file).subarray(12,-20),key=Buffer.from('8fbf3b778fc986d812a84c9ebd4aba2d','hex');
  const source=Buffer.from(raw.map((v,i)=>v^key[i%16])).toString('utf8');
  const start=source.indexOf('SkillCardItem=class'),end=source.indexOf('RockerControl=class',start),card=source.slice(start,end);
@@ -141,4 +141,4 @@ for(const file of ['OriginalCache.bin','OriginalCache-f648a.bin','OriginalCache-
   press();assert.equal(castCount,1,file+' native '+failure+' rejection');
  }
 }
-console.log('PASS: real shipped skill click/release methods across all three profiles, cooldown/energy/ban/death/cannot-cast rejection');
+console.log('PASS: real shipped skill click/release methods across all four profiles, cooldown/energy/ban/death/cannot-cast rejection');

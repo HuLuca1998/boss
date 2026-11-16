@@ -1,4 +1,5 @@
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+for (const configBinding of ['ConfigMgr','ConfigMgr2']) {
 let socket,followed,moved,clicked=0,now=1000;
 const configs=[{id:1,type:1,ins_id:10,is_count:1},{id:2,type:2,ins_id:10,is_count:1},{id:3,type:3,ins_id:10,is_count:1},{id:4,type:4,ins_id:20,is_count:1},{id:5,type:4,ins_id:10,is_count:1}];
 class KButton{event(type){if(type==='down')this.held=true;if(type==='up'&&this.held){clicked++;this.held=false;}}}
@@ -19,6 +20,7 @@ const ctx={KButton,WebSocket:class{constructor(){socket=this;this.readyState=1;}
 let source=fs.readFileSync('BossAssistant/Resources/Runtime.js','utf8');
 // Keep the actual dispatch functions; isolate existing scene policy for this unit test.
 source=source.replace('  function dispatch(m) {','  locationSnapshot=function(){return {kind:"wild"}};requireHuntScene=function(){};\n  function dispatch(m) {');
+if(configBinding==='ConfigMgr2'){context.ConfigMgr2=context.ConfigMgr;delete context.ConfigMgr;}
 vm.runInNewContext(source,ctx);
 function call(op,fields={}){socket.onmessage({data:JSON.stringify({op,id:1,...fields})});return socket.last;}
 let r=call('exploreMap');assert(!r.error,r.error);assert.equal(r.result.fields.length,2);assert.equal(r.result.fields[0].progress,null);assert.equal(r.result.fields[0].events[0].done,true);assert.equal(r.result.fields[0].events[1].observed,false);assert.equal(r.result.fields[0].events[1].done,false);assert.equal(r.result.fields[0].events[1].allowed,false);
@@ -34,3 +36,6 @@ assert.match(call('exploreMove',{x:'bad',z:1}).error,/invalid_position/);
 Object.setPrototypeOf(button,KButton.prototype);delete button.event;now+=1;r=call('exploreUI');assert.equal(call('exploreClick',{revision:r.result.revision,nodeId:'2'}).result.requested,true);assert.equal(clicked,2);button.isClickCoolDown=true;r=call('exploreUI');assert.match(call('exploreClick',{revision:r.result.revision,nodeId:'2'}).error,/cooldown/);
 r=call('exploreUI',{viewId:42});assert.equal(r.result.nodes.length,1);assert.equal(r.result.viewId,42);assert.match(call('exploreUI',{viewId:99}).error,/view_not_visible/);
 console.log('PASS exploration map status, excluded events, locked fields, stale/hidden UI, movement validation');
+
+console.log('PASS native config binding:',configBinding);
+}

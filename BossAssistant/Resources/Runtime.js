@@ -1,4 +1,10 @@
 (function () {
+  // Main-a1c86 renamed the module binding while preserving its native API.
+  function gameConfig(){
+    if(typeof ConfigMgr2!=='undefined')return ConfigMgr2;
+    if(typeof ConfigMgr!=='undefined')return ConfigMgr;
+    throw new Error('game_config_unavailable');
+  }
   var socket, stopped = false, navigation = null, priorAuto = null, targetedAreaBosses={};
   var keyboard = {enabled:false,pressed:{},eventCount:0,lastEvent:null,lastNativeAt:0};
   var originalHasKeyDown=null, keyboardInstalled=false, escapeHeld=false, actionHeld={}, keyboardSkillPress=null;
@@ -159,7 +165,7 @@
     var pos=ready && data.GetHeroPos ? data.GetHeroPos() : null;
     var fieldId=WildIdleModel.inst.GetCurFieldId();
     var field=wild && fieldId ? WildIdleModel.inst.GetFieldCfg(fieldId) : null;
-    var cfg=!wild && dungeonId ? ConfigMgr.inst.GetKey(configTable.instance,dungeonId,false) : null;
+    var cfg=!wild && dungeonId ? gameConfig().inst.GetKey(configTable.instance,dungeonId,false) : null;
     var names={2:'副本',4:'团队副本',6:'高难团队副本',7:'联盟副本',9:'联盟战场',10:'时空裂隙',11:'神器宝库',12:'副本',13:'庆典副本',14:'数字门挑战',15:'爆竹战斗',16:'英雄狩猎'};
     return {kind:wild ? 'wild' : type>0 ? 'dungeon' : 'loading',sceneType:type,
       name:wild ? (field ? L(field.field_name) : '野外加载中') : (cfg && cfg.inst_name ? L(cfg.inst_name) : names[type] || '场景加载中'),
@@ -236,7 +242,7 @@
     var raw = WildModel.inst.insId2WildReviveInfoMap;
     var now = Time.GetServerTime();
     var rows = (area ? MapModel.inst.GetMonsterItemDataListByAreaId(area, true, false, true) : []).map(function (b) {
-      var cfg = ConfigMgr.inst.GetKey(configTable.monster_type, b.bossId);
+      var cfg = gameConfig().inst.GetKey(configTable.monster_type, b.bossId);
       var received = !!(raw && raw.has(b.insId));
       var info = received ? raw.get(b.insId) : null;
       var item = info && Array.isArray(info.info) ? info.info.find(function (p) { return p.point_id === b.pointId; }) : null;
@@ -264,7 +270,7 @@
     var hero=battle && battle.GetWildHeroPos ? battle.GetWildHeroPos() : null;
     var follow=EventFollowMgr.inst.GetEventFollowVo(Scene.SceneType.Wild);
     var grouped={};
-    ConfigMgr.inst.GetCfg(configTable.field).GetCfgList().forEach(function(f){if(!grouped[f.area])grouped[f.area]={id:f.area,name:L(f.area_name_show),unlocked:WildIdleModel.inst.CheckAreaIsUnlock(f.area),current:f.area===area};});
+    gameConfig().inst.GetCfg(configTable.field).GetCfgList().forEach(function(f){if(!grouped[f.area])grouped[f.area]={id:f.area,name:L(f.area_name_show),unlocked:WildIdleModel.inst.CheckAreaIsUnlock(f.area),current:f.area===area};});
     var fieldCfg=WildIdleModel.inst.GetCurFieldId() ? WildIdleModel.inst.GetFieldCfg(WildIdleModel.inst.GetCurFieldId()) : null;
     return {scriptIdentity:'__CODEX_SCRIPT_ID__',runtimeVersion:3,areaBossKey:areaKey,areaBossVersion:1,location:location,areaName:area ? WildIdleModel.inst.GetAreaNameByAreaId(area) : null,fieldName:fieldCfg ? L(fieldCfg.field_name) : null,areas:Object.keys(grouped).map(function(k){return grouped[k];}).sort(function(a,b){return a.id-b.id;}), areaId:area || 0, fieldId:WildIdleModel.inst.GetCurFieldId(), serverTime:now, navigation:navigation ? {areaId:navigation.areaId,bossId:navigation.bossId,insId:navigation.insId,pointId:navigation.pointId,phase:navigation.phase,mode:navigation.mode||'singleRoute',error:navigation.error||null,target:navigation.target,distance:navigation.distance} : null,
       isTeleporting:CombatTPMgr.inst.GetIsTPing(), followUid:follow ? follow.GetUid() : null,
@@ -628,7 +634,7 @@
     var monitor=world.GetGlobalComp(CompEnum.GMonitor),eid=monitor && monitor.GetHeroEid(world.localAgentId),hero=eid && world.GetEntity(eid);
     if(!hero || UtilsInterface.EntityUtils.CheckEntityHasDieTypeTag(hero))return null;
     var transform=hero.Get(RCompEnum.RTransform),controller=world.GetGlobalComp(RCompEnum.GController);
-    var radius=ConfigMgr.inst.GetBattleParam('lock_distance')/100;
+    var radius=gameConfig().inst.GetBattleParam('lock_distance')/100;
     if(!transform || !controller || !Number.isFinite(radius) || radius<=0)return null;
     return {scene:scene,world:world,hero:hero,pos:transform.pos,controller:controller,radius:radius};
   }
@@ -644,7 +650,7 @@
       if(!transform || !attr)return;
       var distance=Utils.CalcDistance(ctx.pos,transform.pos),hp=attr.GetNowHp(true),maxHp=attr.GetMaxHp();
       if(!Number.isFinite(distance) || distance>ctx.radius || !Number.isFinite(hp) || !Number.isFinite(maxHp) || hp<=0 || maxHp<=0)return;
-      var cfg=ConfigMgr.inst.GetKey(configTable.monster_type,entity.cfgId,false);
+      var cfg=gameConfig().inst.GetKey(configTable.monster_type,entity.cfgId,false);
       rows.push({eid:String(entity.eid),name:cfg ? L(cfg.name) : '怪物',cfgId:entity.cfgId,hp:hp,maxHp:maxHp,distance:distance,
         selected:String(selected)===String(entity.eid),requested:String(ctx.controller.curHeroSelectTargetEid)===String(entity.eid)});
     });
@@ -706,7 +712,7 @@
     var wild=WildIdleModel.inst,model=OutEventModel.inst;
     var area=Number(m.areaId)||wild.GetCurAreaId(),fields=wild.GetFieldIdsInArea(area);
     if(!fields || !fields.length)throw Error('unknown_area');
-    var areas={},cfg=ConfigMgr.inst.GetCfg(configTable.field);
+    var areas={},cfg=gameConfig().inst.GetCfg(configTable.field);
     cfg.ForEach(function(f){if(!areas[f.area])areas[f.area]={areaId:f.area,name:L(f.area_name_show),unlocked:wild.CheckAreaIsUnlock(f.area)};});
     var rows=fields.map(function(field){
       var ins=wild.GetInsIdByFieldId(field),map=wild.GetMapIdByFieldId(field);
@@ -806,7 +812,7 @@
       return {requested:true,nodeId:String(m.nodeId)};
     }
     if(m.op==='exploreFollow'){
-      var model=OutEventModel.inst,c=ConfigMgr.inst.GetKey(configTable.outevent,Number(m.eventId));
+      var model=OutEventModel.inst,c=gameConfig().inst.GetKey(configTable.outevent,Number(m.eventId));
       if(!c || !exploreAllowed(c.type))throw Error('event_not_authorized');
       var field=WildIdleModel.inst.GetFieldIdByInsId(c.ins_id);
       if(!WildIdleModel.inst.CheckFieldIsUnlock(field))throw Error('field_locked');

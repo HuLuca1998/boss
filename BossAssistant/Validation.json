@@ -374,8 +374,17 @@
     "objectID": "d55b6f46ec3959de8df2ceb3d91650b432a73c8e",
     "originalSHA256": "b290630fbe82c9a6c7e055c3f9da52ed6c92c7f15ec7d509682d53df5cf4e791",
     "compatibility": "Compared Runtime-referenced game APIs: wild boss/map/follow/navigation APIs preserved; additions concern alliance championship, rule button layout and stone sharing. Runtime unchanged from 1.5.4.",
-    "tests": "Four cache profiles including live read-only Main-a1c86 resolution passed. Final 1.5.4-based Runtime and full signed Actions release checks pending.",
-    "deployment": "Pending Actions stable publication, in-app update and reinjection.",
+    "tests": "Local four-profile cache/live resolution and final Runtime/MCP tests passed; GitHub Checks43862334280 and Signed Release43863280771 passed. Mock tests did not cover renamed module alias.",
+    "deployment": "Actions retry 43863280771 passed full tests/sign/build/installer and published stable v1.5.5. User installed through app: UI reports updated to1.5.5, build42, fixed signature verification passed. Connected runtime returned ConfigMgr is not defined; runtime API compatibility was incomplete; fixed in1.5.6.",
     "limits": "No second-device or new event-scene live validation."
+  },
+  "config_binding_1_5_6": {
+    "date": "2026-11-16",
+    "version": "1.5.6",
+    "build": 43,
+    "fix": "Resolve ConfigMgr2 for Main-a1c86, retain ConfigMgr for older builds.",
+    "regression": "Full location and boss suite runs separately with old binding and exclusively new binding.",
+    "live": "User requested to test keyboard personally after publication; no live keyboard success claimed.",
+    "deployment": "Pending signed stable publication and official app update."
   }
 }

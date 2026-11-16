@@ -1,4 +1,5 @@
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+for (const configBinding of ['ConfigMgr','ConfigMgr2']) {
 let socket,clock=2000,scene=2,render=2,ready=true,teleport=false,locked=false;
 const controller={curHeroSelectTargetEid:null},ai={playerSelectedTargetEid:null},calls=[];
 const entries={};
@@ -20,6 +21,7 @@ const ctx={WebSocket:class {constructor(){socket=this;this.readyState=1;}send(v)
  OutEventModel:{inst:{GetFollowParams:()=>null}},OutEventSingleRouteModel:{inst:{IsInSingleOutEventRouting:()=>false,singleOutEventRoutingEventId:null}},OutEventRouteModel:{inst:{IsInOutEventRouting:()=>false}},
  ClientStateSyncUtils:{ResetLocalHeroAISelectTargetEid(){controller.curHeroSelectTargetEid=null;}}
 };
+if(configBinding==='ConfigMgr2'){context.ConfigMgr2=context.ConfigMgr;delete context.ConfigMgr;}
 vm.runInNewContext(fs.readFileSync('BossAssistant/Resources/Runtime.js','utf8').replace('  function dispatch(m) {','  locationSnapshot=function(){return {kind:"wild"}};\n  function dispatch(m) {'),ctx);
 let id=0;function req(op,fields={}){socket.onmessage({data:JSON.stringify({id:++id,op,...fields})});return socket.last;}
 let read=req('exploreState');assert(!read.error,read.error);assert.equal(read.result.nearbyReady,true);assert.deepEqual(read.result.enemies.map(r=>r.eid),['11','10']);assert.equal(read.result.enemies[0].position.x,3);assert.equal(calls.length,0);assert.equal(req('targetTick').result.enabled,false,'Reading exploration combat does not enable target mode');
@@ -59,3 +61,6 @@ b.name='变形图腾';req('targetTick');assert.equal(controller.curHeroSelectTar
 b.name='普通怪物';clock+=1000;req('targetTick');assert.equal(calls.at(-1),11);
 req('targetMode',{enabled:true,autoHighest:true});socket.onclose();assert.equal(req('targetTick').result.enabled,false);assert.equal(req('targetTick').result.autoHighest,false);
 console.log('PASS: nearby living enemy monsters only, duplicate names use EIDs, native radius, live HP sort, original click, actual vs requested, highest HP toggle, stable ties, totem exclusion/only-totem wait/manual totem selection, manual override, dead/stale/loading/teleport/account gates, owned cleanup and disconnect');
+
+console.log('PASS native config binding:',configBinding);
+}

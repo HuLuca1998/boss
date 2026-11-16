@@ -1,4 +1,5 @@
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+for (const configBinding of ['ConfigMgr','ConfigMgr2']) {
 let socket,scene=1,render=1,area=7,ready=true,teleport=false,callback;
 const auto=[],cleared=[],followed=[];
 const data={world:{battleInitData:{dungeon_id:3600132}},GetHeroPos:()=>({x:12,y:0,z:34}),CheckCurHeroCreated:()=>ready};
@@ -17,6 +18,7 @@ const context={
  EventFollowMgr:{inst:{GetEventFollowVo:()=>null,ClearTargetSceneEventFollow:type=>cleared.push(type),ClearEventFollow(){throw Error('Must not clear dungeon follow');},ShowEventFollowByParams:v=>followed.push(v)}},
  Time:{GetServerTime:()=>1234},Laya:{Vector3},WildMapMgr:{inst:{GetMapPointByTypeAndId1(){}}},MapTool:{GetCommonTpPos:()=>({})},MapBossIcon:{2:'boss'}
 };
+if(configBinding==='ConfigMgr2'){context.ConfigMgr2=context.ConfigMgr;delete context.ConfigMgr;}
 vm.runInNewContext(fs.readFileSync('BossAssistant/Resources/Runtime.js','utf8'),context);
 let id=0;
 function request(op,fields={}){socket.onmessage({data:JSON.stringify({id:++id,op,...fields})});return socket.last;}
@@ -101,3 +103,6 @@ inRegional=true;keys=1;request('assistRun',{avoidNoKeyBoss:true,huntArea:7});ass
 keys=0;clock+=20000;request('assistRun',{avoidNoKeyBoss:true,huntArea:8});assert.equal(auto.length,exitsBefore,'Wrong area cannot move player');
 request('assistRun',{avoidNoKeyBoss:true,huntArea:7});assert.equal(auto.at(-1),false);assert.equal(request('list').result.navigation.phase,'leavingNoKey');callback();assert.equal(request('assistStatus').result.noKeyBossExits,1);
 console.log('PASS: zero-key regional exit, battle disabled, normal-zone/positive-key/manual/area guards');
+
+console.log('PASS native config binding:',configBinding);
+}
