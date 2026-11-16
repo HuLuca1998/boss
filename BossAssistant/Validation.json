@@ -365,5 +365,17 @@
     "tests": "Five Runtime suites, MovementInput aliases/release, three shipped native skill click/release handlers and cooldown/energy/ban/death/cannot-cast rejections, three cache profiles and update policy passed. Native Swift compile passed with installed MacOSX26.5 SDK; default MacOSX27 SDK missing SwiftUIMacros. Signed release Actions 43157130061 and Checks 43157130445 passed, including fixed signer/version checks, bad-signer/tamper rejection, rollback and replacement.",
     "live": "In-app About and Updates discovered 1.5.3, One-click Update installed the official release and reopened. Installed version 1.5.3/build40, deep strict signature and fixed signer verifier pass; bundled Runtime matches repository. Native UI reinjection completed, connection restored with Main-dda2f, ready wild scene and 17 bosses. Settings confirms keyboard enabled and Input Monitoring authorized. About recheck confirms latest. Existing native account-protection countdown remains; no manual protection reset or live skill casting/toggle test performed.",
     "release": "https://github.com/HuLuca1998/boss/releases/tag/v1.5.3"
+  },
+  "hot_update_1_5_5": {
+    "date": "2026-11-16",
+    "version": "1.5.5",
+    "build": 42,
+    "script": "Main-a1c86.js",
+    "objectID": "d55b6f46ec3959de8df2ceb3d91650b432a73c8e",
+    "originalSHA256": "b290630fbe82c9a6c7e055c3f9da52ed6c92c7f15ec7d509682d53df5cf4e791",
+    "compatibility": "Compared Runtime-referenced game APIs: wild boss/map/follow/navigation APIs preserved; additions concern alliance championship, rule button layout and stone sharing. Runtime unchanged from 1.5.4.",
+    "tests": "Four cache profiles including live read-only Main-a1c86 resolution passed. Final 1.5.4-based Runtime and full signed Actions release checks pending.",
+    "deployment": "Pending Actions stable publication, in-app update and reinjection.",
+    "limits": "No second-device or new event-scene live validation."
   }
 }

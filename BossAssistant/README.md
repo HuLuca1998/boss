@@ -3,7 +3,7 @@
 支持环境、功能、权限和使用说明见 [项目 README](../README.md)，发布与测试见 [发布与更新](../docs/发布与更新.md)。
 
 - Sources：SwiftUI 应用、本机桥、键盘、事件与更新客户端。
-- Resources/Runtime.js：适配游戏 1.16.3 的控制脚本，仅明确重新注入时更新游戏缓存并重启游戏。
+- Resources/Runtime.js：适配游戏 1.16.3（含 Main-a1c86 热更新） 的控制脚本，仅明确重新注入时更新游戏缓存并重启游戏。
 - Resources/OriginalCache*.bin：与 GameCacheProfile 中每个热更新版本的 SHA256 匹配的原始缓存，注入与还原所需。
 - Updater：固定签名验证、等待正常退出、安装和失败回滚，不重启游戏。
 - Tests：键盘、恢复、场景、弹窗、红包与更新策略测试。
