@@ -384,7 +384,9 @@
     "build": 43,
     "fix": "Resolve ConfigMgr2 for Main-a1c86, retain ConfigMgr for older builds.",
     "regression": "Full location and boss suite runs separately with old binding and exclusively new binding.",
-    "live": "User requested to test keyboard personally after publication; no live keyboard success claimed.",
-    "deployment": "Pending signed stable publication and official app update."
+    "live": "User requested to test keyboard personally after publication; no synthetic key presses, movement or skill casting performed. Actual keyboard behavior remains for user validation.",
+    "deployment": "Published stable https://github.com/HuLuca1998/boss/releases/tag/v1.5.6; archive SHA25683d7619ce4d91923be1a1e8e9bf290398e1f397f29afa0378ccdfc406bfc9fe7. Installed through app Check Updates / One-click Update from1.5.5. Installed1.5.6/build43; fixed signer/version verify and deep strict codesign pass; installed Runtime SHA256 matches repository.",
+    "tests": "Local five Runtime suites and MCP tests passed. Location, targeting and exploration run with exclusively ConfigMgr2 as well as ConfigMgr. Keyboard shipped native skill handlers verified across all four original cache profiles. GitHub Checks43864281318 and Signed Release43864281548 passed full suites, signed build and installer rejection/replacement/rollback checks.",
+    "connection": "Reinjected through app backup/inject confirmation and normal game restart. Native UI detected17 bosses in current region and keyboard enabled. Read-only state confirms Main-a1c86, wild scene ready, no lock, keyboard.enabled=true; map returns four fields. ConfigMgr ReferenceError resolved."
   }
 }
