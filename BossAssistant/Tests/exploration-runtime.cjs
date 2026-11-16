@@ -20,7 +20,7 @@ const ctx={KButton,WebSocket:class{constructor(){socket=this;this.readyState=1;}
 let source=fs.readFileSync('BossAssistant/Resources/Runtime.js','utf8');
 // Keep the actual dispatch functions; isolate existing scene policy for this unit test.
 source=source.replace('  function dispatch(m) {','  locationSnapshot=function(){return {kind:"wild"}};requireHuntScene=function(){};\n  function dispatch(m) {');
-if(configBinding==='ConfigMgr2'){context.ConfigMgr2=context.ConfigMgr;delete context.ConfigMgr;}
+if(configBinding==='ConfigMgr2'){ctx.ConfigMgr2=ctx.ConfigMgr;delete ctx.ConfigMgr;}
 vm.runInNewContext(source,ctx);
 function call(op,fields={}){socket.onmessage({data:JSON.stringify({op,id:1,...fields})});return socket.last;}
 let r=call('exploreMap');assert(!r.error,r.error);assert.equal(r.result.fields.length,2);assert.equal(r.result.fields[0].progress,null);assert.equal(r.result.fields[0].events[0].done,true);assert.equal(r.result.fields[0].events[1].observed,false);assert.equal(r.result.fields[0].events[1].done,false);assert.equal(r.result.fields[0].events[1].allowed,false);

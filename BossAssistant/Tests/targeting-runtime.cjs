@@ -21,7 +21,7 @@ const ctx={WebSocket:class {constructor(){socket=this;this.readyState=1;}send(v)
  OutEventModel:{inst:{GetFollowParams:()=>null}},OutEventSingleRouteModel:{inst:{IsInSingleOutEventRouting:()=>false,singleOutEventRoutingEventId:null}},OutEventRouteModel:{inst:{IsInOutEventRouting:()=>false}},
  ClientStateSyncUtils:{ResetLocalHeroAISelectTargetEid(){controller.curHeroSelectTargetEid=null;}}
 };
-if(configBinding==='ConfigMgr2'){context.ConfigMgr2=context.ConfigMgr;delete context.ConfigMgr;}
+if(configBinding==='ConfigMgr2'){ctx.ConfigMgr2=ctx.ConfigMgr;delete ctx.ConfigMgr;}
 vm.runInNewContext(fs.readFileSync('BossAssistant/Resources/Runtime.js','utf8').replace('  function dispatch(m) {','  locationSnapshot=function(){return {kind:"wild"}};\n  function dispatch(m) {'),ctx);
 let id=0;function req(op,fields={}){socket.onmessage({data:JSON.stringify({id:++id,op,...fields})});return socket.last;}
 let read=req('exploreState');assert(!read.error,read.error);assert.equal(read.result.nearbyReady,true);assert.deepEqual(read.result.enemies.map(r=>r.eid),['11','10']);assert.equal(read.result.enemies[0].position.x,3);assert.equal(calls.length,0);assert.equal(req('targetTick').result.enabled,false,'Reading exploration combat does not enable target mode');
