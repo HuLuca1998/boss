@@ -397,8 +397,9 @@
     "objectID": "ded446e213e5ad4742666da094a6dc2572339c4d",
     "originalSHA256": "2d0190336c64bbaf45b6e1fcf89e1331f2859fa846f9df8cd6313255f1304d57",
     "compatibility": "Compared Runtime referenced classes/objects and module binding inventory against Main-a1c86. Only CombatMgr differs, in InitBattleRenderLimit for AllianceChampionship rendering. ConfigMgr2 remains the correct module alias. Runtime unchanged from1.5.6.",
-    "tests": "Pending five-profile cache/live-resolution and native-skill-handler regression, full signed release checks.",
-    "deployment": "Pending official publication and in-app upgrade.",
-    "limits": "User tests actual keyboard behavior; no live skill casting or new event-scene testing planned."
+    "tests": "Local five Runtime suites/MCP and five-profile cache tests passed, including read-only live resolution of Main-d53e2. GitHub Checks44078618635 and Signed Release44078619506 passed full tests, signed build and installer verification/rejection/replacement/rollback.",
+    "deployment": "Stable https://github.com/HuLuca1998/boss/releases/tag/v1.5.7; ZIP SHA256d8711a288f19e2a9ee2b5d9db8ff8c4cc8bb2b93b8cf0820bed2bb7678ce83aa. User initiated app one-click download while agent monitored; official update installed1.5.7/build44. Fixed signer/version and deep strict codesign passed; installed Runtime and original cache hashes match repository.",
+    "limits": "User tests actual keyboard behavior; no live skill casting or new event-scene testing planned.",
+    "live_connection": "Reinjected through app backup/inject confirmation and normal game restart. Main-d53e2 connected; native UI shows17 bosses and keyboard enabled in current wild region. No gameplay keys or skill casting tested by agent."
   }
 }
