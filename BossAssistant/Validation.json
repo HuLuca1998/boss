@@ -388,5 +388,17 @@
     "deployment": "Published stable https://github.com/HuLuca1998/boss/releases/tag/v1.5.6; archive SHA25683d7619ce4d91923be1a1e8e9bf290398e1f397f29afa0378ccdfc406bfc9fe7. Installed through app Check Updates / One-click Update from1.5.5. Installed1.5.6/build43; fixed signer/version verify and deep strict codesign pass; installed Runtime SHA256 matches repository.",
     "tests": "Local five Runtime suites and MCP tests passed. Location, targeting and exploration run with exclusively ConfigMgr2 as well as ConfigMgr. Keyboard shipped native skill handlers verified across all four original cache profiles. GitHub Checks43864281318 and Signed Release43864281548 passed full suites, signed build and installer rejection/replacement/rollback checks.",
     "connection": "Reinjected through app backup/inject confirmation and normal game restart. Native UI detected17 bosses in current region and keyboard enabled. Read-only state confirms Main-a1c86, wild scene ready, no lock, keyboard.enabled=true; map returns four fields. ConfigMgr ReferenceError resolved."
+  },
+  "hot_update_1_5_7": {
+    "date": "2026-11-17",
+    "version": "1.5.7",
+    "build": 44,
+    "script": "Main-d53e2.js",
+    "objectID": "ded446e213e5ad4742666da094a6dc2572339c4d",
+    "originalSHA256": "2d0190336c64bbaf45b6e1fcf89e1331f2859fa846f9df8cd6313255f1304d57",
+    "compatibility": "Compared Runtime referenced classes/objects and module binding inventory against Main-a1c86. Only CombatMgr differs, in InitBattleRenderLimit for AllianceChampionship rendering. ConfigMgr2 remains the correct module alias. Runtime unchanged from1.5.6.",
+    "tests": "Pending five-profile cache/live-resolution and native-skill-handler regression, full signed release checks.",
+    "deployment": "Pending official publication and in-app upgrade.",
+    "limits": "User tests actual keyboard behavior; no live skill casting or new event-scene testing planned."
   }
 }
