@@ -410,8 +410,8 @@
     "objectID": "e871d57995560dd3a9cac5830d5bc4581c124146",
     "originalSHA256": "112dc0060979a6d4cdac082e26e817c28b6a862f2711fc1b4e1ba176d04207ea",
     "compatibility": "Compared Runtime referenced classes/objects and binding inventory against Main-d53e2. Only ChatModel differs: system message link argument parsing and VIP link navigation. Red packet interfaces and ConfigMgr2 binding preserved; Runtime unchanged.",
-    "tests": "Pending six-profile cache/live resolution, native-skill-handler regression and signed release checks.",
-    "deployment": "Pending stable publication, official in-app update and injection.",
-    "limits": "Actual keyboard test remains with user; no automated gameplay input."
+    "tests": "Local five Runtime/MCP suites and six-profile cache tests passed, including live read-only Main-1b53c resolution. GitHub Checks44730603293 and Signed Release44730603864 passed full suites, signed build and installer verification/rejection/replacement/rollback.",
+    "deployment": "Stable https://github.com/HuLuca1998/boss/releases/tag/v1.5.8; public ZIP SHA2563de88db1d7336dfbf84b38a244e8be809527967bd2ea825bf9dfbe62d98fe254. Downloaded official ZIP+SHA256, checksum passed; archive policy and fixed signer/version verifier plus deep strict codesign passed against isolated extracted bundle.",
+    "limits": "User explicitly requested publication only and will update, reinject and test personally. No local installation or game restart was performed; live connection and keyboard behavior not verified for1.5.8."
   }
 }
