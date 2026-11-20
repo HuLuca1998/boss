@@ -401,5 +401,17 @@
     "deployment": "Stable https://github.com/HuLuca1998/boss/releases/tag/v1.5.7; ZIP SHA256d8711a288f19e2a9ee2b5d9db8ff8c4cc8bb2b93b8cf0820bed2bb7678ce83aa. User initiated app one-click download while agent monitored; official update installed1.5.7/build44. Fixed signer/version and deep strict codesign passed; installed Runtime and original cache hashes match repository.",
     "limits": "User tests actual keyboard behavior; no live skill casting or new event-scene testing planned.",
     "live_connection": "Reinjected through app backup/inject confirmation and normal game restart. Main-d53e2 connected; native UI shows17 bosses and keyboard enabled in current wild region. No gameplay keys or skill casting tested by agent."
+  },
+  "hot_update_1_5_8": {
+    "date": "2026-11-20",
+    "version": "1.5.8",
+    "build": 45,
+    "script": "Main-1b53c.js",
+    "objectID": "e871d57995560dd3a9cac5830d5bc4581c124146",
+    "originalSHA256": "112dc0060979a6d4cdac082e26e817c28b6a862f2711fc1b4e1ba176d04207ea",
+    "compatibility": "Compared Runtime referenced classes/objects and binding inventory against Main-d53e2. Only ChatModel differs: system message link argument parsing and VIP link navigation. Red packet interfaces and ConfigMgr2 binding preserved; Runtime unchanged.",
+    "tests": "Pending six-profile cache/live resolution, native-skill-handler regression and signed release checks.",
+    "deployment": "Pending stable publication, official in-app update and injection.",
+    "limits": "Actual keyboard test remains with user; no automated gameplay input."
   }
 }
