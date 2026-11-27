@@ -17,7 +17,8 @@ struct GameCacheProfile:Equatable {
         .init(script:"Main-dda2f.js",objectID:"7868a8a23d060f90b2012cfd0b9df2bcb5b7b5c3",resource:"OriginalCache-dda2f",originalHash:"033163e0aeb056f69d8c4df20a59ab181f31ff2057147fe8f58f0e139415fb53"),
         .init(script:"Main-a1c86.js",objectID:"d55b6f46ec3959de8df2ceb3d91650b432a73c8e",resource:"OriginalCache-a1c86",originalHash:"b290630fbe82c9a6c7e055c3f9da52ed6c92c7f15ec7d509682d53df5cf4e791"),
         .init(script:"Main-d53e2.js",objectID:"ded446e213e5ad4742666da094a6dc2572339c4d",resource:"OriginalCache-d53e2",originalHash:"2d0190336c64bbaf45b6e1fcf89e1331f2859fa846f9df8cd6313255f1304d57"),
-        .init(script:"Main-1b53c.js",objectID:"e871d57995560dd3a9cac5830d5bc4581c124146",resource:"OriginalCache-1b53c",originalHash:"112dc0060979a6d4cdac082e26e817c28b6a862f2711fc1b4e1ba176d04207ea")
+        .init(script:"Main-1b53c.js",objectID:"e871d57995560dd3a9cac5830d5bc4581c124146",resource:"OriginalCache-1b53c",originalHash:"112dc0060979a6d4cdac082e26e817c28b6a862f2711fc1b4e1ba176d04207ea"),
+        .init(script:"Main-66751.js",objectID:"07565fde5ea2537c9cd6922888eee98dd309a191",resource:"OriginalCache-66751",originalHash:"69d92588e21ef7d4a0be69b58831c8fcf743397053cf3898d9ff842e3171d623")
     ]
 }
 

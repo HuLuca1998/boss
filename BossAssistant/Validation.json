@@ -413,5 +413,17 @@
     "tests": "Local five Runtime/MCP suites and six-profile cache tests passed, including live read-only Main-1b53c resolution. GitHub Checks44730603293 and Signed Release44730603864 passed full suites, signed build and installer verification/rejection/replacement/rollback.",
     "deployment": "Stable https://github.com/HuLuca1998/boss/releases/tag/v1.5.8; public ZIP SHA2563de88db1d7336dfbf84b38a244e8be809527967bd2ea825bf9dfbe62d98fe254. Downloaded official ZIP+SHA256, checksum passed; archive policy and fixed signer/version verifier plus deep strict codesign passed against isolated extracted bundle.",
     "limits": "User explicitly requested publication only and will update, reinject and test personally. No local installation or game restart was performed; live connection and keyboard behavior not verified for1.5.8."
+  },
+  "hot_update_1_5_9": {
+    "date": "2026-11-27",
+    "version": "1.5.9",
+    "build": 46,
+    "script": "Main-66751.js",
+    "objectID": "07565fde5ea2537c9cd6922888eee98dd309a191",
+    "originalSHA256": "69d92588e21ef7d4a0be69b58831c8fcf743397053cf3898d9ff842e3171d623",
+    "compatibility": "Compared Runtime referenced classes/objects and module binding inventory against Main-1b53c: no changes found. ConfigMgr2 binding retained. Runtime unchanged.",
+    "tests": "Pending seven-profile cache/live-resolution, native-skill-handler regression and signed release checks.",
+    "deployment": "Pending stable publication and official asset verification.",
+    "limits": "Publication only as requested by user; user handles update, reinjection and gameplay tests. No local installation, game restart or live keyboard test."
   }
 }
