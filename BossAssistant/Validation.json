@@ -422,8 +422,8 @@
     "objectID": "07565fde5ea2537c9cd6922888eee98dd309a191",
     "originalSHA256": "69d92588e21ef7d4a0be69b58831c8fcf743397053cf3898d9ff842e3171d623",
     "compatibility": "Compared Runtime referenced classes/objects and module binding inventory against Main-1b53c: no changes found. ConfigMgr2 binding retained. Runtime unchanged.",
-    "tests": "Pending seven-profile cache/live-resolution, native-skill-handler regression and signed release checks.",
-    "deployment": "Pending stable publication and official asset verification.",
+    "tests": "Local five Runtime/MCP suites and seven-profile cache tests passed, including read-only current Main-66751 resolution. GitHub Checks45995573617 and Signed Release45995574380 passed full suites, signed build and installer verification/rejection/replacement/rollback.",
+    "deployment": "Stable https://github.com/HuLuca1998/boss/releases/tag/v1.5.9; official ZIP SHA256e5179aa2032891ba79e0336c15a3411c60e5f605c3bf3648b325fd98a822577a. Downloaded ZIP+checksum, SHA256 and archive policy passed; fixed signer/version verifier and deep strict codesign passed on isolated extracted bundle. User handles local installation and testing.",
     "limits": "Publication only as requested by user; user handles update, reinjection and gameplay tests. No local installation, game restart or live keyboard test."
   }
 }
